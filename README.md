@@ -9,8 +9,15 @@
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Live demo](https://img.shields.io/badge/Live%20demo-life-organizer--824.netlify.app-brightgreen)
 
 </div>
+
+---
+
+## Live demo
+
+Deployed and running at **https://life-organizer-824.netlify.app** — create an account to try it out.
 
 ---
 
@@ -208,6 +215,8 @@ npm run preview         # preview the production build locally
 ## Deploying to Netlify
 
 The app deploys as a static frontend plus the Express API as a **Netlify Function** (`netlify/functions/api.js`), so the frontend and API share one domain and the httpOnly session cookies work unchanged. Configuration lives in `netlify.toml` (build, function settings, SPA rewrite).
+
+> **Status:** the project is deployed live at https://life-organizer-824.netlify.app (frontend + API on Netlify, data in Neon PostgreSQL). The steps below document how the deployment is set up.
 
 **1. Create a hosted PostgreSQL database (Neon)**
 
