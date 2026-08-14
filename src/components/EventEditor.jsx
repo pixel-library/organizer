@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { todayKey } from "../hooks/useLifePlanner";
 
 const CATEGORIES = ["Personal", "Work", "Study", "Health", "Other"];
 const REPEAT_OPTIONS = [
@@ -69,8 +70,8 @@ export default function EventEditor({ event, preset, occurrenceDate, onSave, onC
       setCustomWeekdays(event.customWeekdays || []);
     } else if (preset) {
       setTitle("");
-      setStartDate(preset.date || new Date().toISOString().split("T")[0]);
-      setEndDate(preset.date || new Date().toISOString().split("T")[0]);
+      setStartDate(preset.date || todayKey());
+      setEndDate(preset.date || todayKey());
       setStartTime(preset.startTime || "09:00");
       setEndTime(preset.endTime || "10:00");
       setAllDay(false);
@@ -83,8 +84,8 @@ export default function EventEditor({ event, preset, occurrenceDate, onSave, onC
       setCustomWeekdays([]);
     } else {
       setTitle("");
-      setStartDate(new Date().toISOString().split("T")[0]);
-      setEndDate(new Date().toISOString().split("T")[0]);
+      setStartDate(todayKey());
+      setEndDate(todayKey());
       setStartTime("09:00");
       setEndTime("10:00");
       setAllDay(false);

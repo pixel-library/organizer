@@ -16,7 +16,7 @@ export const STORAGE_KEYS = {
 
 const pad = (n) => String(n).padStart(2, "0");
 export const dateKeyFrom = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const todayKey = () => dateKeyFrom(new Date());
+export const todayKey = () => dateKeyFrom(new Date());
 const parseDateKey = (key) => {
   const parts = String(key || "").split("-").map(Number);
   if (parts.length < 3 || parts.some(isNaN)) return null;

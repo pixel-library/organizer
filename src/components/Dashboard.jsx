@@ -88,7 +88,7 @@ export default function Dashboard({
         <div className="dashboard-empty-state">
           <div className="empty-icon large"><i className="fa-solid fa-sparkles"></i></div>
           <h2>Welcome to Organizer</h2>
-          <p>Start by adding your first task, event, habit or note. Everything you create lives safely in your browser.</p>
+          <p>Start by adding your first task, event, habit or note. Your data is saved securely to your account and synced across sessions.</p>
           <div className="dashboard-empty-actions">
             <button onClick={onOpenCreate}><i className="fa-solid fa-list-check"></i> Add Task</button>
             <button onClick={() => onOpenEvent({ date: today })}><i className="fa-regular fa-calendar-plus"></i> Add Event</button>
@@ -96,7 +96,7 @@ export default function Dashboard({
             <button onClick={onOpenNote}><i className="fa-regular fa-note-sticky"></i> Add Note</button>
           </div>
           <div className="dashboard-empty-strip">
-            <span>Your workspace is clean. Data is stored locally — no signup, no syncing.</span>
+            <span>Your workspace is clean. Sign in on any device to pick up where you left off.</span>
           </div>
         </div>
       </section>

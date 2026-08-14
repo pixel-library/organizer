@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { todayKey } from "../hooks/useLifePlanner";
 
 export default function ImportExportModal({ open, onClose, exportData, importData, replaceAllData, mergeData, initialMode = "export" }) {
   const [mode, setMode] = useState("export");
@@ -22,7 +23,7 @@ export default function ImportExportModal({ open, onClose, exportData, importDat
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `organizer-backup-${new Date().toISOString().split("T")[0]}.json`;
+    link.download = `organizer-backup-${todayKey()}.json`;
     document.body.appendChild(link);
     link.click();
     link.remove();

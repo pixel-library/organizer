@@ -23,7 +23,8 @@
     "test:calendar": "node tests/calendar.test.mjs",
     "test:stats": "node tests/stats.test.mjs",
     "test:collections": "node tests/collections.test.mjs",
-    "test:security": "node tests/security.test.mjs"
+    "test:security": "node tests/security.test.mjs",
+    "test:complete": "node tests/complete.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

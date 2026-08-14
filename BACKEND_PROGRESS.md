@@ -530,4 +530,36 @@ Audit and harden the backend's security posture (auth, cookies, CORS, headers, i
 - No seed/demo data anywhere; the A/B test users are created via the API and removed after the run.
 
 ### Next phase
-- Phase 11 — not started.
+- Phase 12 — not started.
+
+---
+
+## Phase 11 — COMPLETE APPLICATION TEST — COMPLETED
+
+### Objective
+End-to-end test of the full application through the real UI (React in jsdom + Vite middleware + real Express/PG backend): auth, tasks, notes, calendar, dashboard, analytics, profile, user isolation, responsive behavior, and error/network/DB checks. Fix only genuine errors; do not rebuild, remove features, hide errors, or add fake data.
+
+### What was added/fixed
+- **`tests/complete.test.mjs`** (+ `package.json` script `test:complete`) — a 72-assertion full-app suite that drives the real UI:
+  - **Auth**: register → auto-login → refresh keeps session → logout → wrong-password login error → correct login.
+  - **Tasks / Notes / Calendar**: full CRUD through the actual modals and row/agenda controls, with backend verification after each step (create → read → edit → complete task → delete + undo restore → delete again; note edit/delete; event create → edit → delete via Agenda view).
+  - **Dashboard / Analytics**: verified empty state on a fresh user, real data + "1 / 1 tasks", "100%" completion rate, real task/event names after seeded data; analytics empty state for a second fresh user; "No fake/sample content anywhere" leak check (sample titles like "Morning Code Review", "Client Sync Meeting", "Gym Session" must never appear).
+  - **Profile**: name is shown in the sidebar and updated via `PUT /api/profile` (there is no profile editor UI — update is API-only; documented).
+  - **Isolation**: user B's note is invisible to user A in both the API (404) and the UI; A logs back in and still owns its data.
+  - **Responsive**: CSS breakpoints @1250/1050/900/800/620/600/430 exist; off-canvas mobile sidebar opens via hamburger, closes on navigation and on backdrop click.
+  - **Error capture**: no unexpected 4xx, no 5xx in network or backend logs, no console errors/warnings, no leftover test rows or users.
+
+### Genuine bugs found and fixed
+- **UTC date-default bug (real user-facing bug)** — the editors defaulted dates with `new Date().toISOString().split("T")[0]`, which is the **UTC** date, not the user's local date. In a UTC+ timezone shortly after midnight this put new tasks/events/meals on **yesterday**, silently mis-dating them (reproduced: an event created via the UI defaulted to `start=2026-08-14` while local today was `2026-08-15`). Fixed by exporting `todayKey()` (local date) from `useLifePlanner.js` and using it in `EventEditor.jsx`, `MealEditor.jsx`, `TaskModal.jsx`, `App.jsx` (`scheduleNote`), plus the export filenames in `ImportExportModal.jsx` and `Tasks.jsx`. No remaining `toISOString().split("T")` date defaults in `src/`.
+- **Stale dashboard copy** — `Dashboard.jsx` empty state still claimed "Data is stored locally — no signup, no syncing." and "Everything you create lives safely in your browser.", which is false now that data lives in the backend account. Reworded to reflect server-side storage ("Your data is saved securely to your account…", "Sign in on any device to pick up where you left off.").
+
+### Notes (harness findings, no code change)
+- Month-view `.calendar-event` is a plain `<div>`; jsdom's synthetic `dispatchEvent`/`.click()` do not reach its React `onClick` (while `<button>`s and other divs do). This is a jsdom/React-19 harness limitation, not an app bug (no `pointer-events` blocking; the handler is wired). The complete test exercises event edit/delete through the Agenda view's real `<button>`s, which route through the same `eventClick → onEditEvent/onDeleteEvent` path.
+- Profile update is API-only (no profile editor UI exists). Calendar event delete from the month view has no single-event affordance (deletion is via Agenda row trash / selected-event panel) — a UI-design note, not a regression.
+- Recurring-meeting deletion uses a "recurring delete" confirmation panel rather than the browser confirm.
+
+### Tests run (Phase 11)
+1. **`node tests/complete.test.mjs`** — ALL COMPLETE APPLICATION TESTS PASSED (72 assertions, incl. error/network/DB checks).
+2. Regression: **db** (47), **auth** (30), **profile** (26), **tasks** (54), **notes** (45), **calendar** (51), **stats** (82), **collections** (83), **security** (52) — ALL PASSED (470 assertions).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED. **`npm run lint`** — clean (0 warnings). **`npm run build`** — succeeds. **`npm run db:migrate`** — up to date.
+4. Cleanup verified: no leftover test rows or test users in the database after the run.

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { todayKey } from "../hooks/useLifePlanner";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
 export default function MealEditor({ meal, preset, onSave, onClose }) {
   const [day, setDay] = useState("Monday");
-  const [mealDate, setMealDate] = useState(new Date().toISOString().split("T")[0]);
+  const [mealDate, setMealDate] = useState(todayKey());
   const [mealType, setMealType] = useState("Breakfast");
   const [name, setName] = useState("");
   const [time, setTime] = useState("08:00");
@@ -20,7 +21,7 @@ export default function MealEditor({ meal, preset, onSave, onClose }) {
   useEffect(() => {
     if (meal) {
       setDay(meal.day || "Monday");
-      setMealDate(meal.date || new Date().toISOString().split("T")[0]);
+      setMealDate(meal.date || todayKey());
       setMealType(meal.type || "Breakfast");
       setName(meal.name || "");
       setTime(meal.time || "08:00");
@@ -33,7 +34,7 @@ export default function MealEditor({ meal, preset, onSave, onClose }) {
       setStatus(meal.status || "planned");
     } else if (preset) {
       setDay(preset.day || new Date().toLocaleDateString("en-US", { weekday: "long" }));
-      setMealDate(preset.date || new Date().toISOString().split("T")[0]);
+      setMealDate(preset.date || todayKey());
       setMealType(preset.type || "Breakfast");
       setName(preset.name || "");
       setTime(preset.time || (preset.type === "Breakfast" ? "08:00" : preset.type === "Lunch" ? "13:00" : preset.type === "Dinner" ? "20:00" : "16:00"));
@@ -46,7 +47,7 @@ export default function MealEditor({ meal, preset, onSave, onClose }) {
       setStatus("planned");
     } else {
       setDay("Monday");
-      setMealDate(new Date().toISOString().split("T")[0]);
+      setMealDate(todayKey());
       setMealType("Breakfast");
       setName("");
       setTime("08:00");

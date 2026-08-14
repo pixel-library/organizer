@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { todayKey } from "../hooks/useLifePlanner";
 
 export default function TaskModal({ editingTask, onSave, onClose }) {
   const [title, setTitle] = useState("");
@@ -29,7 +30,7 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
       setRecurring(editingTask.recurring || "none");
     } else {
       setTitle("");
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(todayKey());
       setStartDate("");
       setTime("10:00");
       setPriority("Yellow");

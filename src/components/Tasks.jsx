@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { todayKey } from "../hooks/useLifePlanner";
 
 export default function Tasks({
   tasks, isTaskOverdue, onToggleTask, onDeleteTask, onEditTask, onOpenCreate,
@@ -106,7 +107,7 @@ export default function Tasks({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `life-planner-tasks-${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `life-planner-tasks-${todayKey()}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();

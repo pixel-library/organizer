@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useLifePlanner } from "./hooks/useLifePlanner";
+import { useLifePlanner, todayKey } from "./hooks/useLifePlanner";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import CalendarView from "./components/CalendarView";
@@ -303,7 +303,7 @@ export default function App() {
   }, [notes]);
 
   const scheduleNote = useCallback((note) => {
-    const date = new Date().toISOString().split("T")[0];
+    const date = todayKey();
     const category = ["Personal", "Work", "Study"].includes(note.category) ? note.category : "Personal";
     openEventModal({
       date,
