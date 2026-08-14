@@ -114,9 +114,11 @@ POST /api/auth/register  # create account (name, email, password) → session co
 POST /api/auth/login     # verify credentials → session cookie
 POST /api/auth/logout    # invalidate session + clear cookie
 GET  /api/auth/me        # current user (requires auth)
+GET  /api/profile        # read profile of the authenticated user (requires auth)
+PUT  /api/profile        # update name/email of the authenticated user (requires auth)
 ```
 
-Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The `/api/auth/me` route is the protected endpoint guarded by the `requireAuth` middleware.
+Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The `/api/auth/me`, `/api/profile` routes are protected by the `requireAuth` middleware; the user is always resolved from the authenticated session — a `userId` supplied by the client is never trusted.
 
 The frontend does not use the API yet — it continues to run fully offline on `localStorage`.
 

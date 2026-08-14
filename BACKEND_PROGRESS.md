@@ -242,3 +242,42 @@ Implement real authentication for the backend API: registration, login, logout, 
 
 ### Next phase
 - Phase 4 — resource CRUD API (tasks, notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
+
+---
+
+## Phase 4 — User Profile — COMPLETED
+
+### Objective
+Connect the project's profile/account functionality to the authenticated user: read and update the profile via the API, with the user always resolved from the server-side session (never from a client-supplied `userId`), preserving the existing profile UI.
+
+### What was built
+- **`server/routes/profile.js`** — two authenticated endpoints (both behind `requireAuth`):
+  - `GET /api/profile` — returns the profile of the authenticated user (`id`, `name`, `email`, `createdAt`, `updatedAt`); never returns `password`/`password_hash`.
+  - `PUT /api/profile` — updates the authenticated user's `name` / `email` (partial updates supported). Identity is taken **only** from `req.user` (set by `requireAuth` from the session); any `userId`/`id` in the request body is ignored. Validation: name 1–100 chars, valid email; duplicate email (other account) → 409; no valid fields → 400.
+- **`server/app.js`** — mounted the profile router at `/api/profile`.
+- **`package.json`** — new script `test:profile`.
+
+### Scope decision
+The project's only existing profile/account UI is the static sidebar block (`Sidebar.jsx:64–71`, avatar "LP") — there is no dedicated profile page and no client-side profile data. The real profile fields are `users.name` and `users.email`. Per the instruction to implement *only* fields that exist, the profile API exposes exactly those two editable fields (plus identity metadata). The frontend was not modified or redesigned.
+
+### Tests run (Phase 4)
+1. **`node tests/profile.test.mjs`** — ALL PROFILE TESTS PASSED:
+   - Register User A and User B (both 201).
+   - `GET /api/profile` (A) → 200, correct name/email/id, no password fields.
+   - `PUT /api/profile` (A) → 200, returns new name, preserves email.
+   - Refresh: fresh `GET /api/profile` shows the updated name; row verified in the database.
+   - User B isolation: B's `PUT` sending A's `userId`/`id` in the body updated **only B**; A's profile unchanged; B cannot claim A's email (409).
+   - Validation: empty name, invalid email, empty body → 400; partial update keeps email.
+   - `GET`/`PUT /api/profile` without login → 401.
+   - Cleanup: no leftover test users or sessions.
+2. **`node tests/auth.test.mjs`** — ALL AUTH TESTS PASSED (regression).
+3. **`node tests/db.test.mjs`** — ALL DATABASE TESTS PASSED.
+4. **`npm test`** — ALL FUNCTIONAL TESTS PASSED (frontend unchanged).
+5. **`npm run lint`** — clean. **`npm run build`** — succeeds.
+
+### Notes
+- No schema changes were needed this phase (profile lives in the existing `users` table).
+- No frontend files modified.
+
+### Next phase
+- Phase 5 — resource CRUD API (tasks, notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
