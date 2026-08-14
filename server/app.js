@@ -10,6 +10,7 @@ import authRouter from "./routes/auth.js";
 import profileRouter from "./routes/profile.js";
 import tasksRouter from "./routes/tasks.js";
 import notesRouter from "./routes/notes.js";
+import calendarEventsRouter from "./routes/calendarEvents.js";
 
 export function createApp() {
   const app = express();
@@ -30,6 +31,7 @@ export function createApp() {
   app.use(`${config.apiPrefix}/profile`, profileRouter);
   app.use(`${config.apiPrefix}/tasks`, tasksRouter);
   app.use(`${config.apiPrefix}/notes`, notesRouter);
+  app.use(`${config.apiPrefix}/calendarEvents`, calendarEventsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -19,7 +19,8 @@
     "test:auth": "node tests/auth.test.mjs",
     "test:profile": "node tests/profile.test.mjs",
     "test:tasks": "node tests/tasks.test.mjs",
-    "test:notes": "node tests/notes.test.mjs"
+    "test:notes": "node tests/notes.test.mjs",
+    "test:calendar": "node tests/calendar.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

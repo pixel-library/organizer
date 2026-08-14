@@ -128,7 +128,15 @@ GET  /api/notes/:id      # read one note (requires auth)
 PUT  /api/notes/:id      # update a note — partial merge semantics (requires auth)
 PATCH /api/notes/:id     # update a note — partial merge semantics (requires auth)
 DELETE /api/notes/:id    # delete a note (requires auth)
+GET  /api/calendarEvents        # list events (requires auth) — optional ?from=&to= date range
+POST /api/calendarEvents        # create an event (ownership from session, requires auth)
+GET  /api/calendarEvents/:id    # read one event (requires auth)
+PUT  /api/calendarEvents/:id    # update an event — partial merge semantics (requires auth)
+PATCH /api/calendarEvents/:id   # update an event — partial merge semantics (requires auth)
+DELETE /api/calendarEvents/:id  # delete an event (requires auth)
 ```
+
+Calendar events use the existing event fields: `title`, `start`/`end` (dates), `startTime`/`endTime`, `allDay`, `category`, `location`, `description`, `reminder`, `recurrence`, `recurrenceEnd`, `customWeekdays`, `overrides`. `title` and `start` are required on create.
 
 Notes support the existing note features: create, edit, delete, pin (`pinned`), archive/restore (`archived`), categories (`category`), tags, plus server-side **search** (`?search=` across title/content/tags), **filters** (`?category=`, `?archived=true|false`), and **sorting** (`?sort=updated|created|oldest|az|za`, pinned first).
 
@@ -152,6 +160,7 @@ npm run test:auth    # auth API test suite (needs a running DB)
 npm run test:profile # profile API test suite (needs a running DB)
 npm run test:tasks   # tasks API test suite (needs a running DB)
 npm run test:notes   # notes API test suite (needs a running DB)
+npm run test:calendar # calendar events API test suite (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.

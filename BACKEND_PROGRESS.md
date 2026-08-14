@@ -370,3 +370,47 @@ Connect the existing Notes feature to the backend: authenticated note CRUD mirro
 
 ### Next phase
 - Phase 7 — remaining resource CRUD APIs (calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
+
+---
+
+## Phase 7 — Calendar Backend Integration — COMPLETED
+
+### Objective
+Connect the existing calendar to the backend: authenticated event CRUD using the actual fields the calendar already uses, with ownership always derived from the session.
+
+### What was built
+- **`server/routes/calendarEvents.js`** — event CRUD, each endpoint behind `requireAuth`:
+  - `GET /api/calendarEvents` — list with optional **date-range filter** (`?from=`/`?to=` on `start`), sorted by `start_date` then `start_time`.
+  - `POST /api/calendarEvents` — creates an event; `user_id` from the session (**never** from the body). `title` and `start` are required (matching the DB NOT NULL columns the calendar relies on).
+  - `GET /api/calendarEvents/:id` — single event, scoped to owner (404 otherwise).
+  - `PUT` / `PATCH /api/calendarEvents/:id` — partial merge updates; `updated_at` bumped.
+  - `DELETE /api/calendarEvents/:id` — 204 on success, 404 if not owned/missing.
+- **Field mapping** mirrors the frontend `migrateCalendarEvents` model exactly: `start`↔`start_date`, `end`↔`end_date`, `startTime`↔`start_time`, `endTime`↔`end_time`, `allDay`↔`all_day`, `recurrenceEnd`↔`recurrence_end`, `customWeekdays` (integer[] validated 0–6), `overrides` (jsonb, stringified + `::jsonb` cast), plus `title`, `category`, `location`, `description`, `reminder`, `recurrence`.
+- **`server/app.js`** — mounted the router at `/api/calendarEvents`.
+- **`package.json`** — new script `test:calendar`.
+
+### Security / ownership
+- Every query enforces `user_id = authenticated_user_id`; ID operations verify ownership and return 404 for events that exist but belong to another user.
+- `userId`/`id` in the request body is ignored; ownership comes only from the session.
+- Responses never include `user_id`, `password_hash`, or secrets.
+
+### Tests run (Phase 7)
+1. **`node tests/calendar.test.mjs`** — ALL CALENDAR TESTS PASSED:
+   - Create (201, full field round-trip incl. `customWeekdays`/`overrides`; `userId` in body ignored — DB row owned by session user), refresh (event remains), persistence verified in DB.
+   - Date-range query (`?from=`/`?to=`) includes/excludes correctly.
+   - Edit (PATCH + PUT partial merge; preserves `overrides`/`category`), Delete (204, gone → 404).
+   - Logout → login → events still present.
+   - Validation: missing `title` → 400, missing `start` → 400, invalid date → 400, `customWeekdays` out of range → 400, non-object `overrides` → 400, empty PATCH → 400, no login → 401.
+   - Full A/B isolation: B read/edit/delete on A's event → 404; B list excludes A's event; A list excludes B's own event; A's event intact after B's attempts.
+   - Cleanup: no leftover events or test users.
+2. **`node tests/notes.test.mjs`**, **`node tests/tasks.test.mjs`**, **`node tests/auth.test.mjs`**, **`node tests/profile.test.mjs`**, **`node tests/db.test.mjs`** — ALL PASSED (regression).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED (frontend unchanged).
+4. **`npm run lint`** — clean. **`npm run build`** — succeeds.
+
+### Notes
+- No schema changes — the Phase 2 `calendar_events` table already matches the frontend model.
+- No fake/default/demo events: all test events are created via the API and deleted (with their users) after the run.
+- Calendar UI/behavior untouched; no frontend files modified.
+
+### Next phase
+- Phase 8 — remaining resource CRUD APIs (goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
