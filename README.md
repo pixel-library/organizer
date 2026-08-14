@@ -205,6 +205,49 @@ npm run build           # builds to dist/
 npm run preview         # preview the production build locally
 ```
 
+## Deploying to Netlify
+
+The app deploys as a static frontend plus the Express API as a **Netlify Function** (`netlify/functions/api.js`), so the frontend and API share one domain and the httpOnly session cookies work unchanged. Configuration lives in `netlify.toml` (build, function settings, SPA rewrite).
+
+**1. Create a hosted PostgreSQL database (Neon)**
+
+Netlify has no database, so create a free project at [neon.tech](https://neon.tech). Copy the connection string, e.g.:
+
+```
+postgres://user:password@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+```
+
+**2. Push the repo to GitHub**
+
+```
+git remote add origin https://github.com/<you>/organizer.git
+git push -u origin main
+```
+
+**3. Connect Netlify to the repo**
+
+- Go to [app.netlify.com](https://app.netlify.com) → **Add new site** → **Import an existing project** → pick your GitHub repo.
+- Framework preset: **Vite**; build command, publish directory, and function settings are already in `netlify.toml`.
+
+**4. Set environment variables** (Site configuration → Environment variables):
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | your Neon connection string (with `sslmode=require`) |
+| `CORS_ORIGINS` | `https://<your-site>.netlify.app` (the deployed site URL) |
+
+`NODE_ENV=production` and `VITE_API_URL=/.netlify/functions/api` are set in `netlify.toml`. If `CORS_ORIGINS` or `DATABASE_URL` are missing, the server refuses to start on purpose.
+
+**5. Deploy**
+
+The build runs `npm run db:migrate` (applies any pending migrations to Neon — node-pg-migrate skips already-applied ones) then `npm run build`. Hit **Deploy site**.
+
+Notes:
+
+- The SPA rewrite (`/*` → `/index.html`) lets the app use client-side routing; `/.netlify/functions/*` is handled by Netlify's function router before the rewrite.
+- Migrations run on every build; they are idempotent, so repeat deploys are safe. To run them manually, `DATABASE_URL=<neon-url> npm run db:migrate`.
+- The API lives at `/.netlify/functions/api/...` (frontend is pre-configured via `VITE_API_URL`). For local development nothing changes — Vite still proxies `/api` to `localhost:4000`.
+
 ## Project Structure
 
 ```
@@ -246,6 +289,8 @@ life-organizer/
 │   ├── routes/              # health + auth endpoints
 │   └── utils/               # AppError + session helpers
 ├── index.html               # HTML shell
+├── netlify.toml             # Netlify build/function/redirect config
+├── netlify/functions/api.js # Express API as a Netlify Function
 ├── vite.config.js           # Vite configuration
 └── package.json
 ```

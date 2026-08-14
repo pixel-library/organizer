@@ -38,7 +38,8 @@
     "pg": "^8.23.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.2"
+    "react-router-dom": "^7.18.2",
+    "serverless-http": "^4.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

@@ -1,0 +1,20 @@
+[build]
+  command = "npm run db:migrate && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_ENV = "production"
+  VITE_API_URL = "/.netlify/functions/api"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["pg-native"]
+
+[functions.environment]
+  NODE_ENV = "production"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
