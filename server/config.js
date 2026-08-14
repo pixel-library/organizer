@@ -21,6 +21,7 @@ export const config = {
   isDev: process.env.NODE_ENV !== "production",
   port: Number(process.env.PORT) || 4000,
   apiPrefix: process.env.API_PREFIX || "/api",
+  sessionTtlMinutes: Number(process.env.SESSION_TTL_MINUTES) || 10080,
   corsOrigins: normalizeCorsOrigins(process.env.CORS_ORIGINS),
   db: {
     url: buildDatabaseUrl(),

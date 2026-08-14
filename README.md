@@ -109,8 +109,14 @@ npm run server:dev   # start with auto-reload
 Copy `.env.example` to `.env` to customise the port, CORS origins, or database settings. The API exposes:
 
 ```bash
-GET /api/health      # service + database status
+GET  /api/health      # service + database status
+POST /api/auth/register  # create account (name, email, password) → session cookie
+POST /api/auth/login     # verify credentials → session cookie
+POST /api/auth/logout    # invalidate session + clear cookie
+GET  /api/auth/me        # current user (requires auth)
 ```
+
+Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The `/api/auth/me` route is the protected endpoint guarded by the `requireAuth` middleware.
 
 The frontend does not use the API yet — it continues to run fully offline on `localStorage`.
 
@@ -124,6 +130,7 @@ npm run db:migrate   # apply schema migrations
 npm run db:down      # roll back the latest migration
 npm run db:rebuild   # roll back + re-apply (dev)
 npm run test:db      # schema/constraint test suite (needs a running DB)
+npm run test:auth    # auth API test suite (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
@@ -186,7 +193,9 @@ life-organizer/
 │   ├── main.jsx             # App entry point
 │   └── index.css            # Global styles + theme system
 ├── tests/
-│   └── functional.mjs       # Functional + DOM-structure test suite
+│   ├── functional.mjs       # Functional + DOM-structure test suite
+│   ├── db.test.mjs          # Schema/constraint test suite
+│   └── auth.test.mjs        # Auth API test suite
 ├── server/
 │   ├── index.js             # Server entry point + graceful shutdown
 │   ├── app.js               # Express app assembly (middleware, routes, errors)
@@ -195,9 +204,9 @@ life-organizer/
 │   ├── db/
 │   │   ├── embedded.js      # Local user-space PostgreSQL server (dev)
 │   │   └── migrations/      # node-pg-migrate schema migrations
-│   ├── middleware/          # Request logger + centralized error handling
-│   ├── routes/health.js     # Health endpoint
-│   └── utils/AppError.js    # Error class
+│   ├── middleware/          # Request logger, auth guard, error handling
+│   ├── routes/              # health + auth endpoints
+│   └── utils/               # AppError + session helpers
 ├── index.html               # HTML shell
 ├── vite.config.js           # Vite configuration
 └── package.json

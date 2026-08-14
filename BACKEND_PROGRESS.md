@@ -199,3 +199,46 @@ Design mapped 1:1 to the app's real collections in `src/hooks/useLifePlanner.js`
 
 ### Next phase
 - Phase 3 (backend integration) not started — deferred pending instructions.
+
+---
+
+## Phase 3 — User Authentication — COMPLETED
+
+### Objective
+Implement real authentication for the backend API: registration, login, logout, and a session-protected `/me` endpoint, using secure httpOnly cookies and server-side sessions.
+
+### What was built
+- **`server/db/migrations/20260814170000_add-sessions.mjs`** — new `sessions` table (`token_hash` unique, `user_id` FK → `users` with `ON DELETE CASCADE`, `created_at`, `last_seen_at`, `expires_at`, `revoked_at`) + indexes on `user_id` and `expires_at`.
+- **`server/utils/sessions.js`** — session helpers: cryptographically random 64-char token (only its SHA-256 hash is stored in the DB), httpOnly cookie options (`Secure` in production, `SameSite=Lax`), `createSession`, `revokeSession`, `safeUser`.
+- **`server/middleware/auth.js`** — `requireAuth` guard: resolves cookie → validates session hash (missing / revoked / expired → 401), attaches `req.user` + `req.session`, and applies **sliding expiration** (renews `expires_at` when near expiry or idle > 15 min).
+- **`server/routes/auth.js`** — the four endpoints:
+  - `POST /api/auth/register` — validates name/email/password (1–100 name, valid email, 8–72 password), rejects duplicate emails (case-insensitive, 409), bcrypt-hashes (cost 10), creates the user **and** an authenticated session (auto-login), returns 201 + safe user.
+  - `POST /api/auth/login` — verifies credentials (timing-safe: bcrypt compare run even when user missing), creates session, returns 200 + safe user; wrong credentials → 401.
+  - `POST /api/auth/logout` — revokes the server-side session and clears the cookie (204).
+  - `GET /api/auth/me` — protected by `requireAuth`; returns only safe user info (`id, name, email, createdAt, updatedAt`). Never returns `password`, `password_hash`, or secrets.
+- **`server/app.js`** — added `cookie-parser`, CORS `credentials: true`, and mounted the auth router at `/api/auth`.
+- **`server/config.js` / `.env.example`** — `SESSION_TTL_MINUTES` (default 7 days).
+- **`package.json`** — new deps `bcryptjs`, `cookie-parser`; new script `test:auth`.
+
+### Security properties
+- Passwords hashed with bcrypt (cost 10); only the hash is ever stored or compared.
+- Session tokens are random 256-bit values; only their SHA-256 digest is persisted.
+- Cookie is `httpOnly` (invisible to JS), `SameSite=Lax` (CSRF mitigation), `Secure` in production.
+- Passwords never stored in `localStorage`, `sessionStorage`, or frontend JS (frontend untouched).
+- `requireAuth` middleware guards protected endpoints; no DB schema for auth exposed.
+- Logout invalidates the server-side session, so the cookie is dead even if replayed.
+
+### Tests run (Phase 3)
+1. **`node tests/auth.test.mjs`** — ALL AUTH TESTS PASSED: register (201 + httpOnly cookie, safe user, lowercased email), duplicate email → 409, invalid email/short password/empty name/empty payload → 400, login wrong password / unknown email → 401, login → 200 + cookie, `/me` returns safe user (`createdAt,email,id,name,updatedAt`) with no password fields, sliding session renewal extends `expires_at`, logout → 204 + cookie cleared + `/me` → 401, register-created session works, `/me` without cookie / with garbage cookie → 401, no leftover sessions after cleanup.
+2. **`node tests/db.test.mjs`** — ALL DATABASE TESTS PASSED (now includes `sessions` table, its FK to `users`, and 0 seeded rows).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED (frontend unchanged).
+4. **`npm run lint`** — clean. **`npm run build`** — succeeds.
+5. **`npm run db:rebuild`** — full down + up migration cycle succeeds; DB tests still pass after rebuild.
+
+### Notes
+- Express 5's `clearCookie` preserves `maxAge` from the options used at set time; logout passes `maxAge: 0` so the browser actually expires the cookie immediately.
+- Test users are created with unique timestamped emails and deleted (with their sessions) after the run — no fake or leftover accounts.
+- No frontend files modified in this phase.
+
+### Next phase
+- Phase 4 — resource CRUD API (tasks, notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.

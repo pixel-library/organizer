@@ -15,7 +15,7 @@ const assert = (name, cond, extra = "") => {
 
 const tables = [
   "users", "tasks", "notes", "calendar_events", "goals", "habits", "meals",
-  "grocery_items", "custom_reminders", "activity_log", "settings"
+  "grocery_items", "custom_reminders", "activity_log", "settings", "sessions"
 ];
 
 async function main() {

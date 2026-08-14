@@ -15,9 +15,12 @@
     "db:migrate": "node-pg-migrate up --migrations-dir server/db/migrations --envPath .env",
     "db:down": "node-pg-migrate down --migrations-dir server/db/migrations --envPath .env",
     "db:rebuild": "node-pg-migrate down --migrations-dir server/db/migrations --envPath .env && node-pg-migrate up --migrations-dir server/db/migrations --envPath .env",
-    "test:db": "node tests/db.test.mjs"
+    "test:db": "node tests/db.test.mjs",
+    "test:auth": "node tests/auth.test.mjs"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
