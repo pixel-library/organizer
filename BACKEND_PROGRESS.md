@@ -326,3 +326,47 @@ Connect the existing task manager to the backend: a full authenticated task CRUD
 
 ### Next phase
 - Phase 6 — remaining resource CRUD APIs (notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
+
+---
+
+## Phase 6 — Notes Backend Integration — COMPLETED
+
+### Objective
+Connect the existing Notes feature to the backend: authenticated note CRUD mirroring the frontend note model, with search/filters/sorting, ownership always derived from the session.
+
+### What was built
+- **`server/routes/notes.js`** — all six endpoints, each behind `requireAuth`:
+  - `GET /api/notes` — list with **search** (`?search=` across title/content/tags, ILIKE), **filters** (`?category=`, `?archived=true|false`), and **sorting** (`?sort=updated|created|oldest|az|za`). Pinned notes sort first (matches the frontend). Default sort `updated`.
+  - `POST /api/notes` — creates a note with `user_id` from the session (**never** from the body). A note has no required field (the app supports blank notes that are filled in later), so an empty payload creates a note with table defaults.
+  - `GET /api/notes/:id` — single note, scoped to owner (404 otherwise).
+  - `PUT` / `PATCH /api/notes/:id` — partial merge updates; `updated_at` bumped.
+  - `DELETE /api/notes/:id` — 204 on success, 404 if not owned/missing.
+- **Field mapping** mirrors the frontend `migrateNotes` model: `title`, `content`, `category`, `pinned`, `archived`, `tags` (text[]).
+- **`server/app.js`** — mounted the notes router at `/api/notes`.
+- **`package.json`** — new script `test:notes`.
+
+### Security / ownership
+- Every query enforces `user_id = authenticated_user_id`; ID operations verify ownership and return 404 for notes that exist but belong to another user.
+- A `userId`/`id` in the request body is ignored; ownership comes only from the session.
+- Responses never include `user_id`, `password_hash`, or secrets.
+
+### Tests run (Phase 6)
+1. **`node tests/notes.test.mjs`** — ALL NOTES TESTS PASSED:
+   - Create (201, full field round-trip; `userId` in body ignored — DB row owned by session user), refresh (list shows it), persistence verified in DB.
+   - Read (list + single), Edit (PATCH + PUT partial merge, category/pin/archive preserved), Delete (204, gone → 404).
+   - Search across title/content/tags (match + no-match), filters (`category`, `archived=true`), sort (`az`).
+   - Logout → login → notes still present.
+   - Validation: non-string tags → 400, empty PATCH → 400, no login → 401.
+   - User A/B isolation: B read/edit/delete on A's note → 404; B's list excludes A's note; A's note intact after B's attempts.
+   - Cleanup: no leftover notes or test users.
+2. **`node tests/tasks.test.mjs`**, **`node tests/auth.test.mjs`**, **`node tests/profile.test.mjs`**, **`node tests/db.test.mjs`** — ALL PASSED (regression).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED (frontend unchanged).
+4. **`npm run lint`** — clean. **`npm run build`** — succeeds.
+
+### Notes
+- No schema changes — the Phase 2 `notes` table already matches the frontend model.
+- No fake/demo/sample notes: all test notes are created via the API and deleted (with their users) after the run.
+- No frontend files modified.
+
+### Next phase
+- Phase 7 — remaining resource CRUD APIs (calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.

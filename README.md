@@ -122,7 +122,15 @@ GET  /api/tasks/:id      # read one task (requires auth)
 PUT  /api/tasks/:id      # update a task — partial merge semantics (requires auth)
 PATCH /api/tasks/:id     # update a task — partial merge semantics (requires auth)
 DELETE /api/tasks/:id    # delete a task (requires auth)
+GET  /api/notes          # list notes (requires auth) — supports search/filters/sorting
+POST /api/notes          # create a note (ownership from session, requires auth)
+GET  /api/notes/:id      # read one note (requires auth)
+PUT  /api/notes/:id      # update a note — partial merge semantics (requires auth)
+PATCH /api/notes/:id     # update a note — partial merge semantics (requires auth)
+DELETE /api/notes/:id    # delete a note (requires auth)
 ```
+
+Notes support the existing note features: create, edit, delete, pin (`pinned`), archive/restore (`archived`), categories (`category`), tags, plus server-side **search** (`?search=` across title/content/tags), **filters** (`?category=`, `?archived=true|false`), and **sorting** (`?sort=updated|created|oldest|az|za`, pinned first).
 
 Tasks support the existing task-manager features: create, edit, delete, complete (`completed`), priority (`Red`/`Yellow`/`Green`), due date (`date`, `time`), category (`type`), plus server-side **search** (`?search=`), **filters** (`?status=pending|completed|overdue`, `?priority=`, `?type=`, `?from=`/`?to=` date range), and **sorting** (`?sort=dateAsc|dateDesc|priority|name|createdAt|updatedAt`).
 
@@ -143,6 +151,7 @@ npm run test:db      # schema/constraint test suite (needs a running DB)
 npm run test:auth    # auth API test suite (needs a running DB)
 npm run test:profile # profile API test suite (needs a running DB)
 npm run test:tasks   # tasks API test suite (needs a running DB)
+npm run test:notes   # notes API test suite (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
