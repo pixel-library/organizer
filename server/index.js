@@ -7,7 +7,7 @@ const app = createApp();
 const server = app.listen(config.port, () => {
   console.log(`[life-organizer-api] listening on http://localhost:${config.port} (${config.env})`);
   connectDatabase().then(() => {
-    console.log("[life-organizer-api] database placeholder initialized");
+    console.log("[life-organizer-api] database layer initialized");
   });
 });
 

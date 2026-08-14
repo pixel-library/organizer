@@ -128,3 +128,74 @@ server/
 
 ### Next phase
 - Phase 2 (backend integration) not started — deferred pending instructions.
+
+---
+
+## Phase 2 — COMPLETED (Database Implementation)
+
+### Database
+- **PostgreSQL** (chosen — project had none). Driver: `pg`; migrations: `node-pg-migrate`; local dev server: `embedded-postgres` (real PostgreSQL 18.4 binaries, user-space, no root/system install; data dir `.pgdata/`, gitignored).
+- The DB starts **empty — no seed/demo data**. Migration inserts schema only (verified: every table has 0 rows after migration).
+
+### Schema (`server/db/migrations/20260814160000_init-schema.mjs`)
+All tables in `public` schema; every user-owned table carries `user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE`.
+
+| Table | Purpose | Notes |
+| --- | --- | --- |
+| `users` | id (bigserial PK), name, email, password_hash, created_at, updated_at | UNIQUE on email + case-insensitive unique index on `lower(email)` |
+| `tasks` | id, user_id, name, date, time, priority, reminder, completed, type, description, start_date, estimated_time, tags[], subtasks(jsonb), recurring, timestamps | CHECK priority IN (Red/Yellow/Green); idx (user_id), (user_id,date), (user_id,completed) |
+| `notes` | id, user_id, title, content, category, pinned, archived, tags[], timestamps | idx (user_id), (user_id,archived) |
+| `calendar_events` | id, user_id, title, start_date, end_date, start_time, end_time, all_day, category, location, description, reminder, recurrence, recurrence_end, custom_weekdays[], overrides(jsonb), timestamps | idx (user_id), (user_id,start_date) |
+| `goals` | id, user_id, name, current, target, timestamps | idx (user_id) |
+| `habits` | id, user_id, name, days boolean[7], history date[], created_at | idx (user_id) |
+| `meals` | id, user_id, date, type, name, time, calories, protein, carbohydrates, fat, ingredients[], notes, status, day, breakfast/lunch/dinner/snack, timestamps | idx (user_id), (user_id,date) |
+| `grocery_items` | id, user_id, name, category, quantity, note, completed, created_at | idx (user_id), (user_id,completed) |
+| `custom_reminders` | id, user_id, title, date, time, note, type, completed, created_at | idx (user_id) |
+| `activity_log` | id, user_id, name, status, timestamp, created_at | mirrors app History; idx (user_id), (user_id,created_at) |
+| `settings` | user_id (PK, FK users), theme, updated_at | one row per user |
+
+Design mapped 1:1 to the app's real collections in `src/hooks/useLifePlanner.js` (tasks, history→activity_log, goals, notes, habits, meals, calendarEvents→calendar_events, groceryList→grocery_items, customReminders→custom_reminders, settings).
+
+### Migration system
+- `node-pg-migrate` CLI, tracked in `pgmigrations` table. Up/down both defined; `db:rebuild` verified down→up cycle.
+- Scripts: `db:start`, `db:migrate`, `db:down`, `db:rebuild`, `test:db`.
+
+### Environment
+- `.env.example` updated: `DATABASE_URL` + `DB_*` connection vars + embedded PG vars (`PG_DATA_DIR`, `PG_SUPERUSER`, `PG_SUPERUSER_PASSWORD`).
+- Local `.env` created (gitignored) with dev defaults; **no secrets committed**.
+
+### Runtime changes
+- `server/db.js` — real `pg.Pool`; `connectDatabase()` performs `SELECT 1`, is failure-tolerant (server still boots if DB down); `getDatabaseStatus()` reports `provider: "postgres"`.
+- `server/index.js` — log wording updated (placeholder → connected).
+- `GET /api/health` now reports `db: { configured: true, connected: true, provider: "postgres" }`.
+
+### Files changed (Phase 2)
+| File | Action |
+| --- | --- |
+| `server/db/migrations/20260814160000_init-schema.mjs` | added (schema) |
+| `server/db/embedded.js` | added (local PostgreSQL dev server) |
+| `server/db.js` | rewritten (real pg pool) |
+| `server/config.js` | updated (DATABASE_URL builder + embedded config) |
+| `tests/db.test.mjs` | added (DB test suite) |
+| `.env.example` | updated (DB vars) |
+| `.gitignore` | updated (`.pgdata`) |
+| `package.json` | updated (deps pg, node-pg-migrate, embedded-postgres; scripts db:*, test:db) |
+| `README.md` | updated (database setup + stack + structure) |
+| `.env` | created locally (gitignored, not committed) |
+
+### Tests run (Phase 2)
+1. **Database connection** — `node tests/db.test.mjs`: PASS (SELECT 1 through pool).
+2. **Migration** — `npm run db:migrate` applied cleanly; `db:rebuild` (down+up) succeeded; migration recorded in `pgmigrations`.
+3. **Table creation** — all 11 app tables present (users, tasks, notes, calendar_events, goals, habits, meals, grocery_items, custom_reminders, activity_log, settings).
+4. **Foreign keys** — 10 FK checks passed: every user-owned table references `users`.
+5. **Unique email constraint** — exact-case duplicate rejected (`23505`) and case-insensitive duplicate rejected via `lower(email)` unique index.
+6. **FK enforcement** — orphan `user_id` insert rejected (`23503`); deleting a user cascades to owned rows.
+7. **No seed data** — every table verified 0 rows.
+8. **API** — `/api/health` returns `connected: true`; server boots with DB up; frontend unchanged: `npm test` all pass, lint clean, build succeeds.
+
+### Notes
+- `embedded-postgres` required a small fix in `server/db/embedded.js`: `CREATE ROLE ... PASSWORD` cannot use parameterized `$1` in PostgreSQL — password is inline with single-quote escaping.
+- Only the schema layer changed; **no frontend files modified** in this phase.
+
+### Next phase
+- Phase 3 (backend integration) not started — deferred pending instructions.

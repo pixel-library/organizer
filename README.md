@@ -106,13 +106,27 @@ npm run server       # start the Express API (default http://localhost:4000)
 npm run server:dev   # start with auto-reload
 ```
 
-Copy `.env.example` to `.env` to customise the port, CORS origins, or database placeholders. The API exposes:
+Copy `.env.example` to `.env` to customise the port, CORS origins, or database settings. The API exposes:
 
 ```bash
 GET /api/health      # service + database status
 ```
 
 The frontend does not use the API yet — it continues to run fully offline on `localStorage`.
+
+### Database (PostgreSQL)
+
+The backend uses PostgreSQL with `node-pg-migrate` for schema migrations. For local development a real PostgreSQL server can be run entirely in user-space (no install, no root) via `embedded-postgres`:
+
+```bash
+npm run db:start     # boot the local PostgreSQL server (data dir: .pgdata/)
+npm run db:migrate   # apply schema migrations
+npm run db:down      # roll back the latest migration
+npm run db:rebuild   # roll back + re-apply (dev)
+npm run test:db      # schema/constraint test suite (needs a running DB)
+```
+
+Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
 
 ### Production build
 
@@ -141,6 +155,7 @@ npm test            # functional + DOM-structure suite (jsdom + Vite SSR)
 | Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR |
 | Persistence | Browser `localStorage` |
 | API foundation | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) |
+| Database | [PostgreSQL](https://www.postgresql.org/) + [node-pg-migrate](https://salsita.github.io/node-pg-migrate/) + [embedded-postgres](https://github.com/leinelissen/embedded-postgres) (dev) |
 
 ## Project Structure
 
@@ -176,7 +191,10 @@ life-organizer/
 │   ├── index.js             # Server entry point + graceful shutdown
 │   ├── app.js               # Express app assembly (middleware, routes, errors)
 │   ├── config.js            # Environment configuration
-│   ├── db.js                # Database placeholder
+│   ├── db.js                # PostgreSQL connection pool + status
+│   ├── db/
+│   │   ├── embedded.js      # Local user-space PostgreSQL server (dev)
+│   │   └── migrations/      # node-pg-migrate schema migrations
 │   ├── middleware/          # Request logger + centralized error handling
 │   ├── routes/health.js     # Health endpoint
 │   └── utils/AppError.js    # Error class
