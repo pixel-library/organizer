@@ -242,6 +242,8 @@ git push -u origin main
 
 The build runs `npm run db:migrate` (applies any pending migrations to Neon — node-pg-migrate skips already-applied ones) then `npm run build`. Hit **Deploy site**.
 
+> **Note:** New projects on credit-based plans start **private** (visitors are forced to log in with Netlify). After the first deploy, go to **Project configuration → General → Visitor access → Project visibility** and set it to **Public** so anyone with the URL can use the app.
+
 Notes:
 
 - The SPA rewrite (`/*` → `/index.html`) lets the app use client-side routing; `/.netlify/functions/*` is handled by Netlify's function router before the rewrite.
