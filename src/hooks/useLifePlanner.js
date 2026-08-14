@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { api } from "../api";
+import { api, ApiError } from "../api";
 
 export const STORAGE_KEYS = {
   tasks: "life_planner_tasks",
@@ -287,10 +287,8 @@ export function useLifePlanner() {
   const [user, setUser] = useState(null);
   const [authStatus, setAuthStatus] = useState("loading");
   const [authError, setAuthError] = useState("");
-  const bootRef = useRef(false);
   const stateRef = useRef({});
   stateRef.current = { tasks, history, goals, notes, habits, meals, calendarEvents, groceryList, customReminders };
-
   const setters = useMemo(() => ({
     tasks: setTasks, history: setHistory, goals: setGoals, notes: setNotes,
     habits: setHabits, meals: setMeals, calendarEvents: setCalendarEvents,
@@ -360,26 +358,32 @@ export function useLifePlanner() {
     await loadAllCollections();
   }, [migrateLocalStorage, loadAllCollections]);
 
+  const boot = useCallback(async () => {
+    setAuthError("");
+    try {
+      const me = await api.get("/auth/me");
+      setUser(me);
+      setAuthStatus("ready");
+      await enterApp();
+    } catch (err) {
+      setUser(null);
+      if (err instanceof ApiError && err.status === 401) {
+        setAuthStatus("unauthenticated");
+      } else {
+        setAuthStatus("error");
+        setAuthError("Unable to reach the server. Check that the API is running and try again.");
+      }
+    }
+  }, [enterApp]);
+
   useEffect(() => {
-    if (bootRef.current) return;
-    bootRef.current = true;
     let cancelled = false;
     (async () => {
-      try {
-        const me = await api.get("/auth/me");
-        if (cancelled) return;
-        setUser(me);
-        setAuthStatus("ready");
-        await enterApp();
-      } catch {
-        if (!cancelled) {
-          setUser(null);
-          setAuthStatus("unauthenticated");
-        }
-      }
+      if (cancelled) return;
+      await boot();
     })();
     return () => { cancelled = true; };
-  }, [enterApp]);
+  }, [boot]);
 
   const login = useCallback(async (email, password) => {
     setAuthError("");
@@ -1005,7 +1009,7 @@ export function useLifePlanner() {
   return {
     tasks, history, goals, notes, habits, meals, calendarEvents, groceryList, customReminders,
     settings, setSettings,
-    user, authStatus, authError, login, register, logout,
+    user, authStatus, authError, login, register, logout, retryAuth: boot,
     toggleTaskCompletion, deleteTask, isTaskOverdue,
     addOrUpdateTask, bulkCompleteTasks, bulkDeleteTasks,
     updateGoalProgress, updateGoal, addGoal, deleteGoal,

@@ -83,7 +83,7 @@ export default function App() {
   const {
     tasks, history, goals, notes, habits, meals, calendarEvents, groceryList,
     customReminders, settings, setSettings,
-    user, authStatus, authError, login, register, logout,
+    user, authStatus, authError, login, register, logout, retryAuth,
     toggleTaskCompletion, deleteTask, isTaskOverdue,
     addOrUpdateTask, bulkCompleteTasks, bulkDeleteTasks,
     updateGoalProgress, updateGoal, addGoal, deleteGoal,
@@ -393,6 +393,19 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted-2, #888)", fontSize: 14 }}>
         <span>Loading your workspace…</span>
+      </div>
+    );
+  }
+
+  if (authStatus === "error") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, textAlign: "center", padding: 24 }}>
+        <p className="analytics-empty-state" style={{ color: "#e07b7b", padding: 0, maxWidth: 420 }}>
+          {authError}
+        </p>
+        <button type="button" className="small-primary" onClick={retryAuth}>
+          <i className="fa-solid fa-rotate-right"></i> Retry
+        </button>
       </div>
     );
   }
