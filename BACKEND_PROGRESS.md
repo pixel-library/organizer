@@ -413,4 +413,40 @@ Connect the existing calendar to the backend: authenticated event CRUD using the
 - Calendar UI/behavior untouched; no frontend files modified.
 
 ### Next phase
-- Phase 8 — remaining resource CRUD APIs (goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
+- Phase 8 — dashboard + analytics (computed stats from real authenticated-user data) — completed next.
+
+---
+
+## Phase 8 — Dashboard + Analytics — COMPLETED
+
+### Objective
+Connect the existing Dashboard and Analytics to real database data: one authenticated endpoint that computes every metric the current `Dashboard.jsx` and `Analytics.jsx` already show — from the authenticated user's actual rows, never hardcoded.
+
+### What was built
+- **`server/utils/stats.js`** — pure computation module that mirrors the frontend math line-for-line:
+  - `computeDashboard(tasks, events, meals, goals, notes, habits)` — today's tasks + completed today, overall completion rate, high-priority (Red, incomplete) + overdue tasks, goal progress (`sum(min(current,target))/sum(target)`), today's events, today's meals (`date === today` OR `day === today's weekday`) + completed today, this-week snapshot (tasks planned/completed/events/habit check-ins), note counts, and `isEmpty` (all six collections empty).
+  - `computeAnalytics(tasks, events, habits)` — overall/weekly/monthly completion rates, overdue via `isTaskOverdue` (completed→skip, no date→skip, `date + time||23:59 < now`), events this month + upcoming, habit consistency/streaks via a port of `computeHabitStats` (history + current-week checked `days`, best-streak, elapsed-day completion rate from `created_at`), the last-14-days activity chart, `maxActivity`, and `hasData`.
+- **`server/routes/stats.js`** — `GET /api/stats` behind `requireAuth`: loads the user's `tasks`, `calendar_events`, `meals`, `goals`, `notes`, `habits` in parallel (`user_id = authenticated_user_id`), computes both metric blocks, returns `{ dashboard, analytics }`. Any `userId` in a request is irrelevant (read-only endpoint); responses contain no secrets.
+- **`server/app.js`** — mounted at `/api/stats`. **`package.json`** — new script `test:stats`.
+
+### Empty-state behavior (no fake numbers)
+- A brand-new user (or one with zero data across tasks/events/notes/habits/meals/goals) gets `dashboard.isEmpty: true` and `analytics.hasData: false` with every metric at `0` — matching the existing Dashboard/Analytics empty states. No invented percentages or counts.
+
+### Tests run (Phase 8)
+1. **`node tests/stats.test.mjs`** — ALL STATS TESTS PASSED:
+   - New user → `dashboard.isEmpty: true`, `analytics.hasData: false`, all-zero metrics (no fake numbers).
+   - Unauthenticated `GET /api/stats` → 401.
+   - Created real data for User A (4 tasks via `/api/tasks` — 2 completed, 1 Red pending today, 1 Red overdue yesterday; an event + a note via their APIs; goal/meal/habit rows inserted for the same user — those collections have no CRUD endpoint yet). Dashboard then reported the real numbers (total 4, completed 2, 50% rate, high-priority 2, overdue 1, today 3/2, events 1, meals 2/1, goal progress 20%, week snapshot 2 completed / 1 event / 1 habit check-in); Analytics matched (50% overall, week/month rates, month+upcoming events 1, habit completions 1, best streak 1, 14-day chart today bar = 2 tasks + 1 habit + 1 event).
+   - Deleted a task + the event via their APIs → stats updated live (total 3, completed 1, 33% rate, 0 events, 14-day chart updated).
+   - A/B isolation: User B stayed fully empty while A had data; after B created one task, B showed only B's data (total 1) and A's totals were untouched.
+   - Cleanup: no leftover test rows or users.
+2. **`node tests/calendar.test.mjs`**, **`node tests/notes.test.mjs`**, **`node tests/tasks.test.mjs`**, **`node tests/profile.test.mjs`**, **`node tests/auth.test.mjs`**, **`node tests/db.test.mjs`** — ALL PASSED (regression).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED (frontend unchanged). **`npm run lint`** — clean. **`npm run build`** — succeeds.
+
+### Notes
+- No schema changes; stats are computed on demand from existing tables.
+- The stats formulas are a direct port of the existing `Dashboard.jsx` / `Analytics.jsx` / `computeHabitStats` logic (including the Monday-start week window and the history-plus-current-week-days completion count), so the numbers match what the UI already computes.
+- No frontend files modified; no UI redesign.
+
+### Next phase
+- Phase 9 — remaining resource CRUD APIs (goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.

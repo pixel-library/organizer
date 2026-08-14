@@ -134,9 +134,12 @@ GET  /api/calendarEvents/:id    # read one event (requires auth)
 PUT  /api/calendarEvents/:id    # update an event — partial merge semantics (requires auth)
 PATCH /api/calendarEvents/:id   # update an event — partial merge semantics (requires auth)
 DELETE /api/calendarEvents/:id  # delete an event (requires auth)
+GET  /api/stats           # dashboard + analytics metrics (requires auth)
 ```
 
 Calendar events use the existing event fields: `title`, `start`/`end` (dates), `startTime`/`endTime`, `allDay`, `category`, `location`, `description`, `reminder`, `recurrence`, `recurrenceEnd`, `customWeekdays`, `overrides`. `title` and `start` are required on create.
+
+`GET /api/stats` computes the live dashboard + analytics metrics from the authenticated user's real data (no hardcoded numbers): `dashboard` covers today's tasks, completion rate, high-priority/overdue tasks, goal progress, today's events/meals, this-week snapshot, and note counts; `analytics` covers overall/weekly/monthly task completion, overdue load, events (this month + upcoming), habit consistency/streaks, and the last-14-days activity chart. A brand-new user gets `dashboard.isEmpty: true` / `analytics.hasData: false` with all-zero values (the app's empty state), never fake figures.
 
 Notes support the existing note features: create, edit, delete, pin (`pinned`), archive/restore (`archived`), categories (`category`), tags, plus server-side **search** (`?search=` across title/content/tags), **filters** (`?category=`, `?archived=true|false`), and **sorting** (`?sort=updated|created|oldest|az|za`, pinned first).
 
@@ -161,6 +164,7 @@ npm run test:profile # profile API test suite (needs a running DB)
 npm run test:tasks   # tasks API test suite (needs a running DB)
 npm run test:notes   # notes API test suite (needs a running DB)
 npm run test:calendar # calendar events API test suite (needs a running DB)
+npm run test:stats    # dashboard/analytics stats API test suite (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
