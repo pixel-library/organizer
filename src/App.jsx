@@ -8,11 +8,19 @@ import Meals from "./components/Meals";
 import Tasks from "./components/Tasks";
 import Notes from "./components/Notes";
 import History from "./components/History";
+import Analytics from "./components/Analytics";
+import Goals from "./components/Goals";
+import Reminders from "./components/Reminders";
 import TaskModal from "./components/TaskModal";
 import ReminderModal from "./components/ReminderModal";
 import EventEditor from "./components/EventEditor";
 import NoteEditor from "./components/NoteEditor";
 import MealEditor from "./components/MealEditor";
+import QuickAdd from "./components/QuickAdd";
+import CommandPalette from "./components/CommandPalette";
+import SearchModal from "./components/SearchModal";
+import UndoToast from "./components/UndoToast";
+import ImportExportModal from "./components/ImportExportModal";
 
 const VIEW_TITLES = {
   dashboard: "Dashboard Overview",
@@ -21,7 +29,10 @@ const VIEW_TITLES = {
   meals: "Meal Planner",
   tasks: "My Tasks",
   notes: "Notes Section",
-  history: "History Archive"
+  history: "History Archive",
+  analytics: "Productivity Analytics",
+  goals: "Goals",
+  reminders: "Reminders"
 };
 
 const CREATE_LABELS = {
@@ -31,8 +42,13 @@ const CREATE_LABELS = {
   meals: "Plan Meal",
   tasks: "Create Task",
   notes: "Add Note",
-  history: "History"
+  history: "History",
+  analytics: "Export",
+  goals: "New Goal",
+  reminders: "New Reminder"
 };
+
+const THEME_CYCLE = ["dark", "light", "system"];
 
 export default function App() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -52,13 +68,23 @@ export default function App() {
   const [reminderText, setReminderText] = useState("");
   const [clockTime, setClockTime] = useState("");
   const [dashboardTime, setDashboardTime] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [ioOpen, setIoOpen] = useState(false);
+  const [ioMode, setIoMode] = useState("export");
+  const [goalOpenRequest, setGoalOpenRequest] = useState(0);
+  const [reminderOpenRequest, setReminderOpenRequest] = useState(0);
+  const [undoVisible, setUndoVisible] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const notifiedTasksRef = useRef(new Set());
+  const undoTimeoutRef = useRef(null);
 
   const {
     tasks, history, goals, notes, habits, meals, calendarEvents, groceryList,
+    customReminders, settings, setSettings,
     toggleTaskCompletion, deleteTask, isTaskOverdue,
     addOrUpdateTask, bulkCompleteTasks, bulkDeleteTasks,
-    updateGoalProgress, addGoal, deleteGoal,
+    updateGoalProgress, updateGoal, addGoal, deleteGoal,
     toggleHabitDay, addHabit, deleteHabit,
     updateMeal, addMeal, deleteMeal, setMealStatus,
     addNote, updateNote, deleteNote, toggleNoteArchive, restoreNote, toggleNotePin,
@@ -66,6 +92,9 @@ export default function App() {
     addCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
     updateCalendarEventOccurrence, deleteCalendarEventOccurrence,
     addGroceryItem, updateGroceryItem, deleteGroceryItem, toggleGroceryItem, clearPurchasedGrocery,
+    addCustomReminder, deleteCustomReminder, toggleCustomReminder,
+    undoState, undoLastDeletion,
+    exportData, importData, replaceAllData, mergeData,
     formatDateKey, escapeHtml, priorityClass, priorityLabel, reminderLabel
   } = useLifePlanner();
 
@@ -106,6 +135,52 @@ export default function App() {
     return () => clearInterval(interval);
   }, [tasks, formatDateKey]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const apply = () => {
+      const resolved = settings.theme === "system"
+        ? (mq.matches ? "light" : "dark")
+        : settings.theme;
+      root.setAttribute("data-theme", resolved);
+    };
+    apply();
+    if (settings.theme === "system") {
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+  }, [settings.theme]);
+
+  useEffect(() => {
+    if (undoState) {
+      setUndoVisible(true);
+      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+      undoTimeoutRef.current = setTimeout(() => setUndoVisible(false), 8000);
+    } else {
+      setUndoVisible(false);
+    }
+    return () => { if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current); };
+  }, [undoState]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen(p => !p);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const cycleTheme = useCallback(() => {
+    const idx = THEME_CYCLE.indexOf(settings.theme);
+    setSettings({ theme: THEME_CYCLE[(idx + 1) % THEME_CYCLE.length] });
+  }, [settings.theme, setSettings]);
+
   const switchView = useCallback((view) => {
     setCurrentView(view);
   }, []);
@@ -137,6 +212,10 @@ export default function App() {
       setShowTaskModal(true);
     }
   }, [tasks]);
+
+  const updateTask = useCallback((id, patch) => {
+    addOrUpdateTask({ ...patch, editingId: id });
+  }, [addOrUpdateTask]);
 
   const openEventModal = useCallback((preset = null) => {
     setEditingEvent(null);
@@ -276,6 +355,9 @@ export default function App() {
     else if (currentView === "notes") openNoteModal();
     else if (currentView === "meals") openMealModal();
     else if (currentView === "habits") { const name = prompt("Enter habit name:"); if (name) addHabit(name); }
+    else if (currentView === "analytics") { setIoMode("export"); setIoOpen(true); }
+    else if (currentView === "goals") setGoalOpenRequest(n => n + 1);
+    else if (currentView === "reminders") setReminderOpenRequest(n => n + 1);
     else if (currentView === "tasks" || currentView === "dashboard") openCreateModal();
   }, [currentView, openEventModal, openNoteModal, openMealModal, openCreateModal, addHabit]);
 
@@ -284,16 +366,58 @@ export default function App() {
     setCurrentView("calendar");
   }, []);
 
+  const handleQuickAdd = useCallback((kind) => {
+    if (kind === "task") { setCurrentView("tasks"); openCreateModal(); }
+    else if (kind === "event") openEventModal();
+    else if (kind === "habit") { const name = prompt("Enter habit name:"); if (name) addHabit(name); }
+    else if (kind === "note") { setCurrentView("notes"); openNoteModal(); }
+    else if (kind === "reminder") { setCurrentView("reminders"); setReminderOpenRequest(n => n + 1); }
+    else if (kind === "meal") openMealModal();
+  }, [openCreateModal, openEventModal, openNoteModal, openMealModal, addHabit]);
+
+  const goToday = useCallback(() => {
+    setCurrentView("calendar");
+    const evt = new CustomEvent("organizer:goto-today");
+    document.dispatchEvent(evt);
+  }, []);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const openImportExport = useCallback((mode) => {
+    setIoMode(mode || "export");
+    setIoOpen(true);
+  }, []);
+
   return (
     <div className="flex antialiased">
-      <Sidebar currentView={currentView} onSwitchView={switchView} historyCount={history.length} />
-      <main className="app-main flex-1 min-w-0 min-h-screen bg-custom-matt">
+      <Sidebar
+        currentView={currentView}
+        onSwitchView={switchView}
+        historyCount={history.length}
+        mobileOpen={mobileNavOpen}
+        onMobileNavigate={() => setMobileNavOpen(false)}
+      />
+      {mobileNavOpen && <div className="sidebar-backdrop" onClick={() => setMobileNavOpen(false)}></div>}
+      <main className="app-main">
         <header className="top-header">
-          <div>
-            <span className="header-kicker">PERSONAL WORKSPACE</span>
-            <h1 id="view-title">{VIEW_TITLES[currentView] || "Life Planner"}</h1>
+          <div className="header-title-wrap">
+            <button className="mobile-menu-btn" onClick={() => setMobileNavOpen(p => !p)} aria-label="Toggle navigation">
+              <i className="fa-solid fa-bars"></i>
+            </button>
+            <div>
+              <span className="header-kicker">PERSONAL WORKSPACE</span>
+              <h1 id="view-title">{VIEW_TITLES[currentView] || "Life Planner"}</h1>
+            </div>
           </div>
           <div className="header-actions">
+            <button className="header-icon-btn" onClick={openSearch} title="Search (Ctrl+S)" aria-label="Search">
+              <i className="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <button className="header-icon-btn" onClick={() => setPaletteOpen(true)} title="Command palette (Ctrl+K)" aria-label="Command palette">
+              <i className="fa-solid fa-terminal"></i>
+            </button>
+            <button className="header-icon-btn theme-toggle" onClick={cycleTheme} title={`Theme: ${settings.theme}`} aria-label="Toggle theme">
+              <i className={settings.theme === "light" ? "fa-solid fa-sun" : settings.theme === "system" ? "fa-solid fa-circle-half-stroke" : "fa-regular fa-moon"}></i>
+            </button>
             <div className="live-clock">
               <i className="fa-regular fa-clock"></i>
               <span id="clock-time">{clockTime}</span>
@@ -301,6 +425,14 @@ export default function App() {
             <button onClick={handleCreateClick} className="header-create">
               <i className="fa-solid fa-plus"></i> {CREATE_LABELS[currentView] || "Create"}
             </button>
+            <QuickAdd
+              onAddTask={() => handleQuickAdd("task")}
+              onAddEvent={() => handleQuickAdd("event")}
+              onAddHabit={() => handleQuickAdd("habit")}
+              onAddNote={() => handleQuickAdd("note")}
+              onAddReminder={() => handleQuickAdd("reminder")}
+              onAddMeal={() => handleQuickAdd("meal")}
+            />
           </div>
         </header>
         <div className="page-container">
@@ -308,13 +440,16 @@ export default function App() {
             <Dashboard
               tasks={tasks}
               goals={goals}
-              history={history}
               calendarEvents={calendarEvents}
               meals={meals}
               notes={notes}
+              habits={habits}
               onSwitchView={switchView}
               onOpenCreate={openCreateModal}
               onOpenAddGoal={addGoal}
+              onOpenEvent={openEventModal}
+              onAddHabit={addHabit}
+              onOpenNote={openNoteModal}
               onUpdateGoal={updateGoalProgress}
               onDeleteGoal={deleteGoal}
               onToggleTask={toggleTaskCompletion}
@@ -322,8 +457,6 @@ export default function App() {
               formatDateKey={formatDateKey}
               escapeHtml={escapeHtml}
               priorityClass={priorityClass}
-              priorityLabel={priorityLabel}
-              reminderLabel={reminderLabel}
               dashboardTime={dashboardTime}
             />
           )}
@@ -389,6 +522,7 @@ export default function App() {
               onToggleTask={toggleTaskCompletion}
               onDeleteTask={deleteTask}
               onEditTask={editTask}
+              onUpdateTask={updateTask}
               onOpenCreate={openCreateModal}
               onBulkComplete={bulkCompleteTasks}
               onBulkDelete={bulkDeleteTasks}
@@ -410,6 +544,41 @@ export default function App() {
               onOpenNote={openNoteModal}
               onScheduleNote={scheduleNote}
               escapeHtml={escapeHtml}
+            />
+          )}
+          {currentView === "analytics" && (
+            <Analytics
+              tasks={tasks}
+              habits={habits}
+              calendarEvents={calendarEvents}
+              isTaskOverdue={isTaskOverdue}
+              formatDateKey={formatDateKey}
+              onSwitchView={switchView}
+            />
+          )}
+          {currentView === "goals" && (
+            <Goals
+              goals={goals}
+              onAddGoal={addGoal}
+              onUpdateGoal={updateGoal}
+              onDeleteGoal={deleteGoal}
+              escapeHtml={escapeHtml}
+              openRequest={goalOpenRequest}
+            />
+          )}
+          {currentView === "reminders" && (
+            <Reminders
+              tasks={tasks}
+              calendarEvents={calendarEvents}
+              customReminders={customReminders}
+              isTaskOverdue={isTaskOverdue}
+              onAddCustom={addCustomReminder}
+              onDeleteCustom={deleteCustomReminder}
+              onToggleCustom={toggleCustomReminder}
+              onOpenEvent={openEventModal}
+              onOpenTaskModal={editTask}
+              escapeHtml={escapeHtml}
+              openRequest={reminderOpenRequest}
             />
           )}
           {currentView === "history" && (
@@ -456,6 +625,44 @@ export default function App() {
       {showReminder && (
         <ReminderModal text={reminderText} onDismiss={dismissReminder} />
       )}
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onOpenView={switchView}
+        onCreateTask={openCreateModal}
+        onCreateEvent={openEventModal}
+        onCreateNote={openNoteModal}
+        onCreateHabit={() => { const name = prompt("Enter habit name:"); if (name) addHabit(name); }}
+        onGoToday={goToday}
+        onOpenSearch={openSearch}
+        onExport={() => openImportExport("export")}
+        onImport={() => openImportExport("import")}
+      />
+      <SearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        tasks={tasks}
+        calendarEvents={calendarEvents}
+        notes={notes}
+        habits={habits}
+        meals={meals}
+        history={history}
+        onOpenView={switchView}
+        onEditEvent={editEvent}
+        onEditNote={editNote}
+        onEditTask={editTask}
+        escapeHtml={escapeHtml}
+      />
+      <ImportExportModal
+        open={ioOpen}
+        onClose={() => setIoOpen(false)}
+        initialMode={ioMode}
+        exportData={exportData}
+        importData={importData}
+        replaceAllData={replaceAllData}
+        mergeData={mergeData}
+      />
+      <UndoToast undoState={undoVisible ? undoState : null} onUndo={undoLastDeletion} />
     </div>
   );
 }

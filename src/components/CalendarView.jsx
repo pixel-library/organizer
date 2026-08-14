@@ -15,6 +15,7 @@ const categoryColors = {
 };
 
 const SHORT_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_INDEX = { Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6 };
 const START_HOUR = 8;
 const END_HOUR = 20;
@@ -209,7 +210,7 @@ export default function CalendarView({
   onSelectTask, selectedTaskId, escapeHtml, reminderLabel, formatDateKey
 }) {
   const [calMode, setCalMode] = useState(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 800) return "agenda";
+    if (typeof window !== "undefined" && window.innerWidth < 800) return "month";
     return "month";
   });
   const [calDate, setCalDate] = useState(new Date());
@@ -219,6 +220,7 @@ export default function CalendarView({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [interaction, setInteraction] = useState(null);
   const [recurringDelete, setRecurringDelete] = useState(null);
+  const [overflowDay, setOverflowDay] = useState(null);
   const weekBodyRef = useRef(null);
   const dayBodyRef = useRef(null);
   const dragOccurredRef = useRef(false);
@@ -226,6 +228,12 @@ export default function CalendarView({
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const onGoToday = () => setCalDate(new Date());
+    document.addEventListener("organizer:goto-today", onGoToday);
+    return () => document.removeEventListener("organizer:goto-today", onGoToday);
   }, []);
 
   useEffect(() => {
@@ -238,18 +246,6 @@ export default function CalendarView({
       }
     }
   }, [selectedTaskId, tasks]);
-
-  useEffect(() => {
-    const onResize = () => {
-      const small = window.innerWidth < 800;
-      setCalMode(prev => {
-        if (small && (prev === "month" || prev === "week")) return "agenda";
-        return prev;
-      });
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   const today = useMemo(() => formatDateKey(new Date()), [formatDateKey]);
 
@@ -443,6 +439,11 @@ export default function CalendarView({
 
   const goToToday = () => setCalDate(new Date());
 
+  const jumpToDate = (key) => {
+    const d = parseDateKey(key);
+    if (d) setCalDate(d);
+  };
+
   const displayDate = useMemo(() => {
     if (calMode === "day") return `${MONTHS[calDate.getMonth()]} ${calDate.getDate()}, ${calDate.getFullYear()}`;
     if (calMode === "week") {
@@ -465,6 +466,7 @@ export default function CalendarView({
   };
 
   const eventClick = (evt) => {
+    setOverflowDay(null);
     if (evt.isTask) {
       setSelectedId(evt.id);
       if (onSelectTask) onSelectTask(evt.id);
@@ -644,28 +646,41 @@ export default function CalendarView({
     }
 
     return (
-      <div className="calendar-month-grid">
-        {cells.map((cell, i) => {
-          if (!cell) return <div key={`empty-${i}`} className="calendar-empty-day"></div>;
-          const visible = cell.dayEvents.slice(0, 4);
-          return (
-            <div key={cell.dateString} className={`calendar-day ${cell.dateString === today ? "today" : ""}`} onClick={(e) => { if (e.target === e.currentTarget) handleSlotClick(cell.dateString, "09:00"); }}>
-              <div className="calendar-day-number">
-                <span>{cell.day}</span>
-                <button className="calendar-add" onClick={(e) => { e.stopPropagation(); handleSlotClick(cell.dateString, "09:00"); }}>
-                  <i className="fa-solid fa-plus"></i>
-                </button>
-              </div>
-              {visible.map(evt => (
-                <div key={evt.id} className={`calendar-event ${evt.completed ? "completed" : ""}`} style={{ borderLeftColor: evt.color || "#999" }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
-                  <span className="calendar-event-time">{evt.isHabit || evt.allDay ? "" : escapeHtml(evt.startTime || "")}</span>
-                  <span className="calendar-event-name">{escapeHtml(evt.title)}</span>
+      <div className="calendar-month-wrap">
+        <div className="calendar-days-header" aria-hidden="true">
+          {WEEKDAY_LABELS.map(label => <div key={label} className="calendar-day-name">{label}</div>)}
+        </div>
+        <div className="calendar-month-grid">
+          {cells.map((cell, i) => {
+            if (!cell) return <div key={`empty-${i}`} className="calendar-empty-day"></div>;
+            const visible = cell.dayEvents.slice(0, 3);
+            const overflowCount = cell.dayEvents.length - visible.length;
+            return (
+              <div key={cell.dateString} className={`calendar-day ${cell.dateString === today ? "today" : ""} ${cell.dayEvents.length ? "has-events" : ""}`} onClick={(e) => { if (e.target === e.currentTarget) handleSlotClick(cell.dateString, "09:00"); }}>
+                <div className="calendar-day-number">
+                  <span className={`cal-day-date ${cell.dateString === today ? "is-today" : ""}`}>{cell.day}</span>
+                  <button className="calendar-add" onClick={(e) => { e.stopPropagation(); handleSlotClick(cell.dateString, "09:00"); }} aria-label={`Create event on ${cell.dateString}`}>
+                    <i className="fa-solid fa-plus"></i>
+                  </button>
                 </div>
-              ))}
-              {cell.dayEvents.length > 4 && <div className="more-events">+{cell.dayEvents.length - 4} more</div>}
-            </div>
-          );
-        })}
+                <div className="calendar-day-events">
+                  {visible.map(evt => (
+                    <div key={evt.id} className={`calendar-event ${evt.completed ? "completed" : ""} ${evt.isHabit || evt.allDay ? "all-day" : ""}`} style={{ "--evt-color": evt.color || "#999" }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
+                      <span className="calendar-event-dot" style={{ background: evt.color || "#999" }}></span>
+                      {!evt.isHabit && !evt.allDay && <span className="calendar-event-time">{escapeHtml(evt.startTime || "")}</span>}
+                      <span className="calendar-event-name">{escapeHtml(evt.title)}</span>
+                    </div>
+                  ))}
+                  {overflowCount > 0 && (
+                    <button className="more-events" onClick={(e) => { e.stopPropagation(); setOverflowDay(cell.dateString); }}>
+                      +{overflowCount} more
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -756,9 +771,9 @@ export default function CalendarView({
             return (
               <div key={dateKey} className={`week-header-cell ${dateKey === today ? "today" : ""}`}>
                 <span>{d.toLocaleDateString(undefined, { weekday: "short" })}</span>
-                <strong>{d.getDate()}</strong>
+                <strong className={dateKey === today ? "is-today" : ""}>{d.getDate()}</strong>
                 {dayData.dayAllDay.map(evt => (
-                  <button key={evt.id} className="week-allday-chip" style={{ borderLeftColor: evt.color }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
+                  <button key={evt.id} className="week-allday-chip" style={{ "--evt-color": evt.color }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
                     <i className="fa-solid fa-circle" style={{ color: evt.color, fontSize: 5, marginRight: 4 }}></i>
                     {escapeHtml(evt.title)}
                   </button>
@@ -824,7 +839,7 @@ export default function CalendarView({
         {allDayEvents.length > 0 && (
           <div className="day-allday-strip">
             {allDayEvents.map(evt => (
-              <button key={evt.id} className="week-allday-chip" style={{ borderLeftColor: evt.color }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
+              <button key={evt.id} className="week-allday-chip" style={{ "--evt-color": evt.color }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
                 <i className="fa-solid fa-circle" style={{ color: evt.color, fontSize: 5, marginRight: 4 }}></i>
                 {escapeHtml(evt.title)}
               </button>
@@ -910,14 +925,14 @@ export default function CalendarView({
         {agendaItems.length === 0 && <div className="empty-state">No upcoming events.</div>}
         {agendaItems.map(day => (
           <div key={day.date} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#888", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".08em" }}>{day.label} — {day.date}</div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "var(--muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".08em" }}>{day.label} — {day.date}</div>
             {day.events.map(evt => (
-              <div key={evt.id} className="dash-task-row" style={{ padding: "8px 3px", borderBottom: "1px solid rgba(255,255,255,.045)", alignItems: "center" }}>
+              <div key={evt.id} className="dash-task-row" style={{ padding: "8px 3px", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-                  <span style={{ width: 50, fontSize: 12, fontWeight: 700, color: "#aaa" }}>{evt.allDay || evt.isHabit ? "All day" : escapeHtml(evt.startTime || "")}</span>
+                  <span style={{ width: 50, fontSize: 12, fontWeight: 700, color: "var(--muted)" }}>{evt.allDay || evt.isHabit ? "All day" : escapeHtml(evt.startTime || "")}</span>
                   <span style={{ width: 8, height: 8, borderRadius: "50%", background: evt.color || "#888", flexShrink: 0 }}></span>
-                  <span style={{ flex: 1, fontSize: 13, color: evt.completed ? "#666" : "#ddd", fontWeight: 600, textDecoration: evt.completed ? "line-through" : "none" }}>{escapeHtml(evt.title)}</span>
-                  <span style={{ fontSize: 12, color: "#666" }}>{escapeHtml(evt.category || evt.type)}</span>
+                  <span style={{ flex: 1, fontSize: 13, color: evt.completed ? "var(--muted-2)" : "var(--text)", fontWeight: 600, textDecoration: evt.completed ? "line-through" : "none" }}>{escapeHtml(evt.title)}</span>
+                  <span style={{ fontSize: 12, color: "var(--muted-2)" }}>{escapeHtml(evt.category || evt.type)}</span>
                 </div>
                 <div style={{ display: "flex", gap: 4 }}>
                   {evt.isTask ? (
@@ -945,13 +960,15 @@ export default function CalendarView({
     return renderAgendaView();
   };
 
+  const overflowEvents = overflowDay ? displayEvents.filter(e => e.start === overflowDay || e.end === overflowDay) : [];
+
   return (
     <section id="view-calendar" className="view-section">
       <div className="calendar-page-header">
         <div>
           <span className="calendar-eyebrow">WORKSPACE / SCHEDULE</span>
-          <h2>Task calendar</h2>
-          <p>Schedule your work and monitor productivity performance.</p>
+          <h2>Calendar</h2>
+          <p>Schedule events, track tasks and review your productivity.</p>
         </div>
         <div className="calendar-header-actions">
           <button onClick={goToToday} className="calendar-dark-btn">Today</button>
@@ -959,15 +976,15 @@ export default function CalendarView({
             <i className="fa-solid fa-list-check"></i> New Task
           </button>
           <button onClick={() => onOpenEvent()} className="calendar-orange-btn">
-            <i className="fa-solid fa-plus"></i> Add schedule
+            <i className="fa-solid fa-plus"></i> Create Event
           </button>
         </div>
       </div>
 
       <div className="calendar-search-bar">
         <i className="fa-solid fa-magnifying-glass"></i>
-        <input type="search" placeholder="Search events..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+        <input type="search" placeholder="Search events..." value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search calendar events" />
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} aria-label="Filter by category">
           <option value="all">All</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -975,14 +992,23 @@ export default function CalendarView({
 
       <div className="calendar-main-toolbar">
         <div className="calendar-navigation">
-          <button onClick={() => navigate(-1)} title="Previous"><i className="fa-solid fa-chevron-left"></i></button>
-          <button onClick={() => navigate(1)} title="Next"><i className="fa-solid fa-chevron-right"></i></button>
+          <button onClick={() => navigate(-1)} title="Previous" aria-label="Previous"><i className="fa-solid fa-chevron-left"></i></button>
           <button onClick={goToToday} className="toolbar-today">Today</button>
+          <button onClick={() => navigate(1)} title="Next" aria-label="Next"><i className="fa-solid fa-chevron-right"></i></button>
           <span className="calendar-toolbar-title" id="gcal-display-date">{displayDate}</span>
+          <div className="calendar-date-jump">
+            <i className="fa-regular fa-calendar"></i>
+            <input
+              type="date"
+              value={formatDateKey(calDate)}
+              onChange={(e) => jumpToDate(e.target.value)}
+              aria-label="Jump to date"
+            />
+          </div>
         </div>
-        <div className="calendar-view-switcher">
+        <div className="calendar-view-switcher" role="tablist" aria-label="Calendar view">
           {["day","week","month","year","agenda"].map(mode => (
-            <button key={mode} className={calMode === mode ? "active" : ""} onClick={() => setCalMode(mode)}>
+            <button key={mode} role="tab" aria-selected={calMode === mode} className={calMode === mode ? "active" : ""} onClick={() => setCalMode(mode)}>
               {mode.charAt(0).toUpperCase() + mode.slice(1)}
             </button>
           ))}
@@ -992,11 +1018,22 @@ export default function CalendarView({
       <div className="calendar-workspace">
         <div className="calendar-main-card">
           <div className="calendar-card-top">
-            <span>TASK TIMELINE</span>
-            <span id="calendar-visible-count">{displayEvents.length} items</span>
+            <span>{calMode === "month" ? "MONTHLY VIEW" : calMode === "week" ? "WEEKLY VIEW" : calMode === "day" ? "DAILY VIEW" : calMode === "year" ? "YEARLY VIEW" : "AGENDA"}</span>
+            <span id="calendar-visible-count">{displayEvents.length} item{displayEvents.length === 1 ? "" : "s"}</span>
           </div>
           <div className="calendar-viewport">
-            {renderViewport()}
+            {displayEvents.length === 0 && calMode !== "year" ? (
+              <div className="calendar-empty-state">
+                <div className="empty-icon"><i className="fa-regular fa-calendar-days"></i></div>
+                <strong>No events scheduled</strong>
+                <span>Your calendar is clear.</span>
+                <button className="small-primary" onClick={() => onOpenEvent({ date: formatDateKey(calDate) })}>
+                  <i className="fa-solid fa-plus"></i> Create Event
+                </button>
+              </div>
+            ) : (
+              renderViewport()
+            )}
           </div>
         </div>
 
@@ -1011,14 +1048,14 @@ export default function CalendarView({
 
           <div className="analytics-range">
             <span>Range</span>
-            <span style={{ fontSize: 12, color: "#aaa" }}>Current month</span>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>Current month</span>
           </div>
           <p className="analytics-period">Current month performance</p>
 
           <div className="analytics-metrics">
             <div><span>Scheduled</span><strong>{analyticsData.total}</strong></div>
             <div><span>Completed</span><strong>{analyticsData.completed}</strong></div>
-            <div><span>Efficiency</span><strong>{analyticsData.rate}%</strong></div>
+            <div><span>Efficiency</span><strong>{analyticsData.total ? `${analyticsData.rate}%` : "0"}</strong></div>
             <div><span>High priority</span><strong>{analyticsData.red}</strong></div>
           </div>
 
@@ -1119,6 +1156,31 @@ export default function CalendarView({
         </aside>
       </div>
 
+      {overflowDay && (
+        <div className="modal-overlay" onClick={() => setOverflowDay(null)}>
+          <div className="modal-box" style={{ maxWidth: 480 }} role="dialog" aria-modal="true" aria-label={`Events on ${overflowDay}`}>
+            <div className="modal-header">
+              <div>
+                <span>DAY OVERVIEW</span>
+                <h3>{overflowDay}</h3>
+              </div>
+              <button onClick={() => setOverflowDay(null)}><i className="fa-solid fa-xmark"></i></button>
+            </div>
+            <div className="modal-body">
+              {overflowEvents.length === 0 && <div className="empty-state">No events scheduled.</div>}
+              {overflowEvents.map(evt => (
+                <div key={evt.id} className="overflow-event-row" onClick={() => eventClick(evt)}>
+                  <span className="calendar-event-dot" style={{ background: evt.color || "#888" }}></span>
+                  <span className="overflow-event-time">{evt.allDay || evt.isHabit ? "All day" : escapeHtml(evt.startTime || "")}</span>
+                  <span className="overflow-event-name">{escapeHtml(evt.title)}</span>
+                  <button className="task-tool-btn" onClick={(e) => { e.stopPropagation(); eventDelete(evt); }}><i className="fa-solid fa-trash"></i></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {recurringDelete && (
         <div className="modal-overlay" onClick={() => setRecurringDelete(null)}>
           <div className="modal-box" style={{ maxWidth: 480 }}>
@@ -1130,7 +1192,7 @@ export default function CalendarView({
               <button onClick={() => setRecurringDelete(null)}><i className="fa-solid fa-xmark"></i></button>
             </div>
             <div className="modal-body">
-              <p style={{ fontSize: 13, color: "#888", marginBottom: 10 }}>This event repeats. What would you like to delete?</p>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>This event repeats. What would you like to delete?</p>
               <button className="modal-field-btn" onClick={() => { onDeleteOccurrence(recurringDelete.originalId, recurringDelete.dateKey, "this"); setRecurringDelete(null); }}>
                 This event
               </button>

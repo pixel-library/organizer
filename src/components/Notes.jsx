@@ -25,7 +25,8 @@ export default function Notes({ notes, _onUpdateNote, onDeleteNote, onToggleArch
       if (category !== "all" && n.category !== category) return false;
       if (search.trim()) {
         const s = search.toLowerCase();
-        if (!n.title.toLowerCase().includes(s) && !n.content.toLowerCase().includes(s)) return false;
+        const inTags = Array.isArray(n.tags) && n.tags.some(t => t.toLowerCase().includes(s));
+        if (!n.title.toLowerCase().includes(s) && !n.content.toLowerCase().includes(s) && !inTags) return false;
       }
       return true;
     });
@@ -93,6 +94,11 @@ export default function Notes({ notes, _onUpdateNote, onDeleteNote, onToggleArch
                     <h4>{escapeHtml(note.title)}</h4>
                     <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "center", flexWrap: "wrap" }}>
                       <span style={{ fontSize: 12, color: "#7a7a7a", background: "#202020", padding: "3px 8px", borderRadius: 4 }}>{note.category}</span>
+                      {Array.isArray(note.tags) && note.tags.map(tag => (
+                        <span key={tag} style={{ fontSize: 11, color: "#8b7cff", background: "rgba(139,124,255,.12)", padding: "3px 8px", borderRadius: 20 }}>
+                          #{tag}
+                        </span>
+                      ))}
                       {note.pinned && <span style={{ fontSize: 12, color: "#f59e0b" }}><i className="fa-solid fa-thumbtack"></i> Pinned</span>}
                       {note.archived && <span style={{ fontSize: 12, color: "#8b7cff" }}><i className="fa-solid fa-box-archive"></i> Archived</span>}
                     </div>

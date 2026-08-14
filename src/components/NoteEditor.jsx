@@ -7,6 +7,7 @@ export default function NoteEditor({ note, onSave, onClose }) {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("Personal");
   const [pinned, setPinned] = useState(false);
+  const [tags, setTags] = useState("");
   const titleRef = useRef(null);
 
   useEffect(() => {
@@ -15,11 +16,13 @@ export default function NoteEditor({ note, onSave, onClose }) {
       setContent(note.content || "");
       setCategory(note.category || "Personal");
       setPinned(!!note.pinned);
+      setTags(Array.isArray(note.tags) ? note.tags.join(", ") : "");
     } else {
       setTitle("");
       setContent("");
       setCategory("Personal");
       setPinned(false);
+      setTags("");
     }
     setTimeout(() => titleRef.current?.focus(), 50);
   }, [note]);
@@ -29,7 +32,8 @@ export default function NoteEditor({ note, onSave, onClose }) {
       alert("Please fill in all required fields.");
       return;
     }
-    onSave({ title, content, category, pinned, editingId: note?.id || null });
+    const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
+    onSave({ title, content, category, pinned, tags: tagList, editingId: note?.id || null });
   };
 
   const handleKeyDown = (e) => {
@@ -56,6 +60,10 @@ export default function NoteEditor({ note, onSave, onClose }) {
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
               {NOTE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
+          </div>
+          <div className="modal-field">
+            <label>Tags (comma separated)</label>
+            <input type="text" placeholder="ideas, work, urgent..." value={tags} onChange={(e) => setTags(e.target.value)} />
           </div>
           <div className="modal-field">
             <label>Content</label>

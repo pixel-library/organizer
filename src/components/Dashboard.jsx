@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import AudioPlayer from "./AudioPlayer";
 
 export default function Dashboard({
-  tasks, goals, calendarEvents, meals, notes,
-  onSwitchView, onOpenCreate, onOpenAddGoal,
-  onUpdateGoal, onToggleTask, onSelectTask,
+  tasks, goals, calendarEvents, meals, notes, habits,
+  onSwitchView, onOpenCreate, onOpenAddGoal, onOpenEvent, onAddHabit, onOpenNote,
+  onUpdateGoal, onDeleteGoal, onToggleTask, onSelectTask,
   formatDateKey, escapeHtml, priorityClass, dashboardTime
 }) {
   const today = formatDateKey(new Date());
@@ -14,6 +14,7 @@ export default function Dashboard({
   const completed = useMemo(() => tasks.filter(t => t.completed).length, [tasks]);
   const rate = total ? Math.round((completed / total) * 100) : 0;
   const high = useMemo(() => tasks.filter(t => t.priority === "Red" && !t.completed).length, [tasks]);
+  const overdue = useMemo(() => tasks.filter(t => t.date && !t.completed && t.date < today).length, [tasks, today]);
   const goalTotal = useMemo(() => goals.reduce((sum, g) => sum + Number(g.target || 0), 0), [goals]);
   const goalCurrent = useMemo(() => goals.reduce((sum, g) => sum + Math.min(Number(g.current || 0), Number(g.target || 0)), 0), [goals]);
   const project = goalTotal ? Math.round((goalCurrent / goalTotal) * 100) : 0;
@@ -30,15 +31,15 @@ export default function Dashboard({
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const upcoming = [...calendarEvents, ...tasks]
-      .filter(e => e.start >= today)
+      .filter(e => (e.start || e.date) >= today)
       .filter(e => {
-        if (e.start === today) {
+        if ((e.start || e.date) === today) {
           const [h, m] = (e.startTime || e.time || "23:59").split(":").map(Number);
           return h * 60 + m > currentMinutes;
         }
         return true;
       })
-      .sort((a, b) => `${a.start}${a.startTime || a.time || ""}`.localeCompare(`${b.start}${b.startTime || b.time || ""}`));
+      .sort((a, b) => `${a.start || a.date}${a.startTime || a.time || ""}`.localeCompare(`${b.start || b.date}${b.startTime || b.time || ""}`));
     return upcoming[0] || null;
   }, [calendarEvents, tasks, today]);
 
@@ -58,6 +59,49 @@ export default function Dashboard({
       .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
       .slice(0, 10);
   }, [tasks]);
+
+  const weeklyStats = useMemo(() => {
+    const start = new Date();
+    const day = start.getDay();
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+    const weekStart = new Date(start);
+    weekStart.setDate(diff);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const startKey = formatDateKey(weekStart);
+    const endKey = formatDateKey(weekEnd);
+    const weekTasks = tasks.filter(t => t.date >= startKey && t.date <= endKey);
+    const weekCompleted = weekTasks.filter(t => t.completed).length;
+    const weekEvents = calendarEvents.filter(e => e.start >= startKey && e.start <= endKey);
+    const weekHabitCompletions = habits.reduce((sum, h) => sum + (Array.isArray(h.history) ? h.history.filter(k => k >= startKey && k <= endKey).length : 0), 0);
+    return { weekTasks: weekTasks.length, weekCompleted, weekEvents: weekEvents.length, weekHabits: weekHabitCompletions };
+  }, [tasks, calendarEvents, habits, formatDateKey]);
+
+  const isEmpty = useMemo(() => {
+    return tasks.length === 0 && calendarEvents.length === 0 && notes.length === 0 &&
+      habits.length === 0 && meals.length === 0 && goals.length === 0;
+  }, [tasks, calendarEvents, notes, habits, meals, goals]);
+
+  if (isEmpty) {
+    return (
+      <section id="view-dashboard" className="view-section">
+        <div className="dashboard-empty-state">
+          <div className="empty-icon large"><i className="fa-solid fa-sparkles"></i></div>
+          <h2>Welcome to Organizer</h2>
+          <p>Start by adding your first task, event, habit or note. Everything you create lives safely in your browser.</p>
+          <div className="dashboard-empty-actions">
+            <button onClick={onOpenCreate}><i className="fa-solid fa-list-check"></i> Add Task</button>
+            <button onClick={() => onOpenEvent({ date: today })}><i className="fa-regular fa-calendar-plus"></i> Add Event</button>
+            <button onClick={() => { const name = prompt("Enter habit name:"); if (name) onAddHabit(name); }}><i className="fa-solid fa-bolt"></i> Add Habit</button>
+            <button onClick={onOpenNote}><i className="fa-regular fa-note-sticky"></i> Add Note</button>
+          </div>
+          <div className="dashboard-empty-strip">
+            <span>Your workspace is clean. Data is stored locally — no signup, no syncing.</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="view-dashboard" className="view-section">
@@ -116,7 +160,7 @@ export default function Dashboard({
           </div>
           <div className="dash-stat-value">{high}</div>
           <div className="dash-stat-meta">
-            <span>Requires attention</span>
+            <span>{overdue} overdue</span>
             <span className="trend-alert">Priority</span>
           </div>
           <div className="mini-progress priority">
@@ -153,7 +197,7 @@ export default function Dashboard({
           </div>
           <div className="timeline-toolbar">
             <span>Chronological task flow</span>
-            <span id="dashboard-task-total">{total} scheduled items</span>
+            <span id="dashboard-task-total">{total} scheduled item{total === 1 ? "" : "s"}</span>
           </div>
           <div className="dashboard-timeline">
             {sorted.length === 0 && <div className="empty-state">No timeline items yet.</div>}
@@ -163,7 +207,7 @@ export default function Dashboard({
                 <div key={task.id} className="timeline-row" onClick={() => onSelectTask(task.id)}>
                   <div className="timeline-time">
                     <b>{escapeHtml(task.time)}</b>
-                    <span>{escapeHtml(task.date.slice(5))}</span>
+                    <span>{escapeHtml(String(task.date).slice(5))}</span>
                   </div>
                   <div className="timeline-line">
                     <span className={`timeline-dot ${color}`}></span>
@@ -205,8 +249,12 @@ export default function Dashboard({
                     <span style={{ width: `${percent}%` }}></span>
                   </div>
                   <div className="project-row-meta">
-                    <small>{goal.current} / {goal.target} {escapeHtml(goal.unit)}</small>
-                    <button onClick={() => onUpdateGoal(index, 1)}>+1</button>
+                    <small>{goal.current} / {goal.target} {escapeHtml(goal.unit || "")}</small>
+                    <div>
+                      <button onClick={() => onUpdateGoal(index, 1)} title="Increase progress">+1</button>
+                      <button onClick={() => onUpdateGoal(index, -1)} title="Decrease progress">-1</button>
+                      <button className="danger" onClick={() => { if (confirm("Delete this goal?")) onDeleteGoal(goal.id); }} title="Delete"><i className="fa-solid fa-trash"></i></button>
+                    </div>
                   </div>
                 </div>
               );
@@ -270,24 +318,24 @@ export default function Dashboard({
               <div className="empty-state">No tasks, events or meals scheduled for today.</div>
             )}
             {nextEvent && (
-              <div style={{ padding: 10, background: "#202020", borderRadius: 6, marginBottom: 10, border: "1px solid rgba(255,255,255,.06)" }}>
-                <div style={{ fontSize: 12, color: "#777", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>NEXT EVENT</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{escapeHtml(nextEvent.title || nextEvent.name)}</div>
-                <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+              <div style={{ padding: 10, background: "var(--surface)", borderRadius: 6, marginBottom: 10, border: "1px solid var(--border)" }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>NEXT EVENT</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{escapeHtml(nextEvent.title || nextEvent.name)}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
                   {escapeHtml(nextEvent.start || nextEvent.date)} · {escapeHtml(nextEvent.startTime || nextEvent.time || "")}
                 </div>
               </div>
             )}
             {todayMeals.length > 0 && (
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: "#777", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>
                   MEALS TODAY · {completedMealsToday}/{todayMeals.length} completed
                 </div>
                 {todayMeals.map((meal, i) => (
-                  <div key={i} style={{ padding: "6px 3px", borderBottom: "1px solid rgba(255,255,255,.045)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <div key={i} style={{ padding: "6px 3px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: meal.status === "completed" ? "#22c55e" : meal.status === "skipped" ? "#8d8d8d" : "#f59e0b", flexShrink: 0 }}></span>
-                    <span style={{ flex: 1, fontSize: 14, color: meal.status === "completed" ? "#666" : "#ddd", fontWeight: 600, textDecoration: meal.status === "completed" ? "line-through" : "none" }}>{escapeHtml(meal.name || meal.type)}</span>
-                    <span style={{ fontSize: 12, color: "#666" }}>{escapeHtml(meal.time || "")}</span>
+                    <span style={{ flex: 1, fontSize: 14, color: meal.status === "completed" ? "var(--muted-2)" : "var(--text)", fontWeight: 600, textDecoration: meal.status === "completed" ? "line-through" : "none" }}>{escapeHtml(meal.name || meal.type)}</span>
+                    <span style={{ fontSize: 12, color: "var(--muted-2)" }}>{escapeHtml(meal.time || "")}</span>
                   </div>
                 ))}
               </div>
@@ -314,6 +362,20 @@ export default function Dashboard({
           </div>
         </div>
       </div>
+
+      <div className="dashboard-weekly-strip">
+        <div>
+          <span className="panel-kicker">THIS WEEK</span>
+          <h3>Weekly snapshot</h3>
+        </div>
+        <div className="dashboard-weekly-stats">
+          <div><strong>{weeklyStats.weekTasks}</strong><span>Tasks planned</span></div>
+          <div><strong>{weeklyStats.weekCompleted}</strong><span>Completed</span></div>
+          <div><strong>{weeklyStats.weekEvents}</strong><span>Events</span></div>
+          <div><strong>{weeklyStats.weekHabits}</strong><span>Habit check-ins</span></div>
+        </div>
+      </div>
+
       <div className="dashboard-panel" style={{ marginTop: 10 }}>
         <div className="panel-heading">
           <div>

@@ -1,16 +1,24 @@
-export default function Sidebar({ currentView, onSwitchView, historyCount }) {
+export default function Sidebar({ currentView, onSwitchView, historyCount, mobileOpen = false, onMobileNavigate }) {
   const navItems = [
     { id: "dashboard", icon: "fa-solid fa-house", label: "Dashboard" },
     { id: "calendar", icon: "fa-regular fa-calendar-days", label: "Task calendar" },
-    { id: "habits", icon: "fa-solid fa-bolt", label: "Habit Tracker" },
-    { id: "meals", icon: "fa-solid fa-utensils", label: "Meal Planner" },
     { id: "tasks", icon: "fa-solid fa-list-check", label: "My Tasks" },
     { id: "notes", icon: "fa-regular fa-note-sticky", label: "Notes" },
+    { id: "analytics", icon: "fa-solid fa-chart-simple", label: "Analytics" },
+    { id: "goals", icon: "fa-solid fa-bullseye", label: "Goals" },
+    { id: "habits", icon: "fa-solid fa-bolt", label: "Habit Tracker" },
+    { id: "reminders", icon: "fa-regular fa-bell", label: "Reminders" },
+    { id: "meals", icon: "fa-solid fa-utensils", label: "Meal Planner" },
     { id: "history", icon: "fa-solid fa-clock-rotate-left", label: "History" }
   ];
 
+  const go = (id) => {
+    onSwitchView(id);
+    onMobileNavigate?.();
+  };
+
   return (
-    <aside className="app-sidebar">
+    <aside className={`app-sidebar ${mobileOpen ? "open" : ""}`}>
       <div>
         <div className="sidebar-brand">
           <span className="brand-dot"></span>
@@ -25,7 +33,7 @@ export default function Sidebar({ currentView, onSwitchView, historyCount }) {
             <a
               key={item.id}
               href="#"
-              onClick={(e) => { e.preventDefault(); onSwitchView(item.id); }}
+              onClick={(e) => { e.preventDefault(); go(item.id); }}
               id={`nav-${item.id}`}
               className={`nav-item ${currentView === item.id ? "active" : ""}`}
             >
