@@ -281,3 +281,48 @@ The project's only existing profile/account UI is the static sidebar block (`Sid
 
 ### Next phase
 - Phase 5 — resource CRUD API (tasks, notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
+
+---
+
+## Phase 5 — Task Manager Backend Integration — COMPLETED
+
+### Objective
+Connect the existing task manager to the backend: a full authenticated task CRUD API that mirrors the frontend task model (create, edit, delete, complete, priority, due date, category, search, filters, sorting), with ownership always derived from the authenticated session.
+
+### What was built
+- **`server/routes/tasks.js`** — all six required endpoints, each behind `requireAuth`:
+  - `GET /api/tasks` — list with server-side **search** (`?search=`, ILIKE across name/description/type/priority/reminder/tags), **filters** (`?status=pending|completed|overdue`, `?priority=`, `?type=`, `?from=`/`?to=` due-date range), and **sorting** (`?sort=dateAsc|dateDesc|priority|name|createdAt|updatedAt`, default `dateAsc`).
+  - `POST /api/tasks` — creates a task with `user_id` set from the session (**never** from the request body).
+  - `GET /api/tasks/:id` — single task, scoped to the owner (404 otherwise).
+  - `PUT` / `PATCH /api/tasks/:id` — partial merge updates (supports toggling `completed`, editing any field); `updated_at` bumped.
+  - `DELETE /api/tasks/:id` — 204 on success, 404 if not owned/missing.
+- **Field mapping** mirrors the frontend `migrateTasks` model exactly: `date`↔`date`, `startDate`↔`start_date`, `estimatedTime`↔`estimated_time`, `tags` (text[]), `subtasks` (jsonb, stringified before binding), `priority` (Red/Yellow/Green validated), `type` (category), `recurring`, `reminder`, `completed`, `description`. Empty dates/times serialize as `""` (like the frontend) and store as NULL.
+- **`server/middleware/errorHandler.js`** — added PostgreSQL error-code mapping so constraint/format errors surface as 4xx (23505→409; 23503/23502/23514/22P02/22P03/22007/22008→400) instead of 500.
+- **`server/app.js`** — mounted the tasks router at `/api/tasks`.
+- **`package.json`** — new script `test:tasks`.
+
+### Security / ownership
+- Every query enforces `user_id = authenticated_user_id`; ID operations verify ownership. A task that exists but belongs to another user returns 404 for read/edit/delete (no existence leak).
+- The request body may contain `userId`/`id` — it is ignored; ownership comes only from the session.
+- Responses never include `user_id`, `password_hash`, or secrets.
+
+### Tests run (Phase 5)
+1. **`node tests/tasks.test.mjs`** — ALL TASKS TESTS PASSED:
+   - Create (201, full round-trip of all fields, `userId` in body ignored — DB row owned by session user).
+   - Read (list + single), Edit (PATCH + PUT partial merge), Complete (`completed: true`), Delete (204, gone → 404, double-delete → 404).
+   - Refresh persistence (fresh request), logout→login persistence (task survives session change).
+   - Search (`?search=report` matches, no-match returns empty), filters (`status=completed/pending`, `priority`, `type`, date range in/out), invalid `status` → 400.
+   - Validation: POST without `name` → 400, invalid `priority` → 400, invalid `date` → 400, empty PATCH body → 400, no login → 401.
+   - User A/B isolation: B reading/editing/deleting A's task → 404; B's list excludes A's task; A's task intact afterwards.
+   - Cleanup: no leftover tasks or test users.
+2. **`node tests/auth.test.mjs`**, **`node tests/profile.test.mjs`**, **`node tests/db.test.mjs`** — ALL PASSED (regression).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED (frontend unchanged).
+4. **`npm run lint`** — clean. **`npm run build`** — succeeds.
+
+### Notes
+- No schema changes needed — the Phase 2 `tasks` table already matches the frontend model.
+- No fake tasks: all test tasks are created via the API and deleted (with their users) after the run.
+- No frontend files modified.
+
+### Next phase
+- Phase 6 — remaining resource CRUD APIs (notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.

@@ -17,7 +17,8 @@
     "db:rebuild": "node-pg-migrate down --migrations-dir server/db/migrations --envPath .env && node-pg-migrate up --migrations-dir server/db/migrations --envPath .env",
     "test:db": "node tests/db.test.mjs",
     "test:auth": "node tests/auth.test.mjs",
-    "test:profile": "node tests/profile.test.mjs"
+    "test:profile": "node tests/profile.test.mjs",
+    "test:tasks": "node tests/tasks.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -116,9 +116,17 @@ POST /api/auth/logout    # invalidate session + clear cookie
 GET  /api/auth/me        # current user (requires auth)
 GET  /api/profile        # read profile of the authenticated user (requires auth)
 PUT  /api/profile        # update name/email of the authenticated user (requires auth)
+GET  /api/tasks          # list tasks (requires auth) — supports search/filters/sorting
+POST /api/tasks          # create a task (ownership from session, requires auth)
+GET  /api/tasks/:id      # read one task (requires auth)
+PUT  /api/tasks/:id      # update a task — partial merge semantics (requires auth)
+PATCH /api/tasks/:id     # update a task — partial merge semantics (requires auth)
+DELETE /api/tasks/:id    # delete a task (requires auth)
 ```
 
-Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The `/api/auth/me`, `/api/profile` routes are protected by the `requireAuth` middleware; the user is always resolved from the authenticated session — a `userId` supplied by the client is never trusted.
+Tasks support the existing task-manager features: create, edit, delete, complete (`completed`), priority (`Red`/`Yellow`/`Green`), due date (`date`, `time`), category (`type`), plus server-side **search** (`?search=`), **filters** (`?status=pending|completed|overdue`, `?priority=`, `?type=`, `?from=`/`?to=` date range), and **sorting** (`?sort=dateAsc|dateDesc|priority|name|createdAt|updatedAt`).
+
+Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The protected routes (`/api/auth/me`, `/api/profile`, `/api/tasks`) use the `requireAuth` middleware; the user is always resolved from the authenticated session — a `userId` supplied by the client is never trusted, and every task query enforces `user_id = authenticated_user_id` (cross-user reads/edits/deletes return 404).
 
 The frontend does not use the API yet — it continues to run fully offline on `localStorage`.
 
@@ -133,6 +141,8 @@ npm run db:down      # roll back the latest migration
 npm run db:rebuild   # roll back + re-apply (dev)
 npm run test:db      # schema/constraint test suite (needs a running DB)
 npm run test:auth    # auth API test suite (needs a running DB)
+npm run test:profile # profile API test suite (needs a running DB)
+npm run test:tasks   # tasks API test suite (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
