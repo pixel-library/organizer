@@ -6,7 +6,6 @@
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwindcss&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 </div>
@@ -15,7 +14,7 @@
 
 ## About
 
-Life Planner OS is a single-page workspace that brings together everything you need to stay on top of your life — tasks, calendar events, habits, meals, notes, and goals — in one clean, dark-themed interface. All your data lives in your browser via `localStorage`, so there is no backend, no account, and no setup required.
+Life Planner OS is a single-page workspace that brings together everything you need to stay on top of your life — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics — in one clean, dark-themed interface. All your data lives in your browser via `localStorage`, so there is no backend, no account, and no setup required. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours.
 
 ## Features
 
@@ -23,38 +22,60 @@ Life Planner OS is a single-page workspace that brings together everything you n
 - Live statistics: today's task count, project progress, high-priority items, and overall completion rate
 - Chronological project timeline with priority-coded dots
 - Today's agenda merging events, meals, and tasks into one view
-- Recent notes preview and a built-in focus audio player
+- Weekly snapshot, recent notes preview, and a built-in focus audio player
 
 ### Task Calendar
-- Month, week, and day views
+- Day, week, month, year, and agenda views
 - Recurring events (daily, weekly, monthly, yearly, custom weekdays)
-- Per-occurrence overrides — edit, move, or delete a single instance or the whole series
-- Color-coded categories (Personal, Work, Study, Health, and more) with meals and habits overlaid on the grid
+- Per-occurrence overrides — edit, move, resize, or delete a single instance or the whole series
+- Drag-to-create events, color-coded categories, and meals and habits overlaid on the grid
+- Sidebar analytics: efficiency, priority distribution, workload, and 7-day activity
 
 ### Task Management
-- Create, edit, complete, and delete tasks
+- List and kanban board views with search, filters (status / priority / type), and sorting
 - Priority levels (High / Medium / Low) with overdue detection
+- Subtasks with progress, tags, descriptions, and estimated time
+- Bulk complete, bulk delete, select-all, and CSV export
 - In-app reminders fired at the exact time, or 10/30/60 minutes before
-- Bulk complete and bulk delete actions
 
 ### Habit Tracker
-- Track up to seven days per habit with a simple weekly grid
+- Weekly check-in grid with current and best streaks and completion rate
 - Add and remove habits on the fly
 
 ### Meal Planner
-- Plan breakfast, lunch, dinner, and snacks per day
-- Track calories and macros per meal
-- Mark meals as planned, completed, or skipped
-- Auto-generated grocery list with check-off and clear-purchased actions
+- Plan breakfast, lunch, dinner, and snacks per day across a full week
+- Track calories and macros per meal; mark meals planned, completed, or skipped
+- Auto-generated grocery list (from meal ingredients or manual) with categories and clear-purchased
 
 ### Notes
-- Organize notes into categories (Personal, Work, Study)
+- Organize notes into categories (Personal, Work, Study, Ideas, Important)
+- Tag notes and filter/search across titles, content, and tags
 - Pin important notes and archive the rest — restore them anytime
 - Schedule any note straight onto your calendar
+
+### Goals
+- Track progress toward real targets with an overall progress overview
+- Increment/decrement progress and mark achievements
+
+### Reminders
+- Everything scheduled to remind you in one place — task alerts, event alerts, and custom reminders
+- Toggle reminders complete or delete them, with browser notification polling
+
+### Analytics
+- Task completion rate, overdue load, habit consistency, and best streak
+- Weekly and monthly breakdowns plus a 14-day activity chart
 
 ### History
 - Activity log of every action you take — created, completed, updated, deleted
 - Remove individual entries or clear the whole archive
+
+### Power User Tools
+- **Command palette** (Ctrl/Cmd + K) for instant navigation and creation
+- **Global search** (Ctrl/Cmd + S) across tasks, events, notes, habits, meals, and history
+- **Quick Add** menu for one-click creation from anywhere
+- **Undo toast** after any deletion (8-second window)
+- **Import / Export** data as a JSON backup — merge with existing data or replace everything
+- **Themes**: dark, light, and system-following with a one-click cycle
 
 ## Getting Started
 
@@ -85,10 +106,11 @@ npm run build       # builds to dist/
 npm run preview     # preview the production build locally
 ```
 
-### Linting
+### Linting & tests
 
 ```bash
 npm run lint        # runs oxlint with React & Oxc rules
+npm test            # functional + DOM-structure suite (jsdom + Vite SSR)
 ```
 
 ## Tech Stack
@@ -97,10 +119,11 @@ npm run lint        # runs oxlint with React & Oxc rules
 | --- | --- |
 | Framework | [React 19](https://react.dev/) |
 | Build tool | [Vite](https://vitejs.dev/) |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) + custom CSS |
+| Styling | Custom CSS with a `data-theme` dark/light system |
 | Icons | [Font Awesome 6](https://fontawesome.com/) |
 | Typography | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) |
 | Linting | [oxlint](https://oxc.rs/) |
+| Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR |
 | Persistence | Browser `localStorage` |
 
 ## Project Structure
@@ -111,32 +134,40 @@ life-organizer/
 ├── src/
 │   ├── components/          # UI components
 │   │   ├── Dashboard.jsx    # Control center with stats & agenda
-│   │   ├── CalendarView.jsx # Month/week/day calendar
-│   │   ├── Tasks.jsx        # Task list with bulk actions
-│   │   ├── Habits.jsx       # Weekly habit tracker
-│   │   ├── Meals.jsx        # Meal planner + grocery list
-│   │   ├── Notes.jsx        # Notes with pin/archive
+│   │   ├── CalendarView.jsx # Day/week/month/year/agenda calendar
+│   │   ├── Tasks.jsx        # Task list + kanban board
+│   │   ├── Habits.jsx       # Weekly habit tracker with streaks
+│   │   ├── Meals.jsx        # Weekly meal planner + grocery list
+│   │   ├── Notes.jsx        # Notes with tags, pin & archive
+│   │   ├── Goals.jsx        # Goal tracking
+│   │   ├── Reminders.jsx    # Derived + custom reminders
+│   │   ├── Analytics.jsx    # Productivity analytics
 │   │   ├── History.jsx      # Activity log
-│   │   └── ...              # Modals & editors
+│   │   ├── CommandPalette.jsx # Ctrl+K command palette
+│   │   ├── SearchModal.jsx  # Ctrl+S global search
+│   │   ├── QuickAdd.jsx     # Quick-add menu
+│   │   ├── ImportExportModal.jsx # JSON backup / restore
+│   │   ├── UndoToast.jsx    # Undo-deletion toast
+│   │   └── ...              # Editors & modals
 │   ├── hooks/
 │   │   └── useLifePlanner.js # Core state, persistence & actions
 │   ├── App.jsx              # Root view orchestration
 │   ├── main.jsx             # App entry point
-│   └── index.css            # Global styles
-├── index.html               # HTML shell & theme config
+│   └── index.css            # Global styles + theme system
+├── tests/
+│   └── functional.mjs       # Functional + DOM-structure test suite
+├── index.html               # HTML shell
 ├── vite.config.js           # Vite configuration
 └── package.json
 ```
 
 ## How It Works
 
-All state is managed by the `useLifePlanner` hook (`src/hooks/useLifePlanner.js`). Every change is persisted to `localStorage` under the `life_planner_*` key namespace, so your data survives page reloads and browser sessions. The app ships with sample data so you can explore every feature immediately — clear it anytime from the History section.
+All state is managed by the `useLifePlanner` hook (`src/hooks/useLifePlanner.js`). Every change is persisted to `localStorage` under the `life_planner_*` key namespace, so your data survives page reloads and browser sessions. On first load every collection starts empty — the UI guides you through your first task, event, habit, or note instead of seeding sample content. Back up your data anytime with the export feature, and restore or merge it later.
 
 ## Roadmap
 
-- [ ] Export / import data as JSON
-- [ ] Dark / light theme toggle
-- [ ] Notification support for background reminders
+- [ ] Notification support for background reminders (Service Worker)
 - [ ] PWA installation for offline use
 - [ ] Server-synced mode
 
