@@ -1,5 +1,17 @@
 import "dotenv/config";
 
+const env = process.env.NODE_ENV || "development";
+const isProd = env === "production";
+
+if (isProd) {
+  if (!process.env.DATABASE_URL && (!process.env.DB_USER || !process.env.DB_PASSWORD)) {
+    throw new Error("Production requires DATABASE_URL (or DB_USER + DB_PASSWORD) to be set");
+  }
+  if (!process.env.CORS_ORIGINS) {
+    throw new Error("Production requires CORS_ORIGINS to be set");
+  }
+}
+
 const normalizeCorsOrigins = (value) =>
   String(value || "http://localhost:5173")
     .split(",")
@@ -17,8 +29,9 @@ const buildDatabaseUrl = () => {
 };
 
 export const config = {
-  env: process.env.NODE_ENV || "development",
-  isDev: process.env.NODE_ENV !== "production",
+  env,
+  isProd,
+  isDev: env !== "production",
   port: Number(process.env.PORT) || 4000,
   apiPrefix: process.env.API_PREFIX || "/api",
   sessionTtlMinutes: Number(process.env.SESSION_TTL_MINUTES) || 10080,

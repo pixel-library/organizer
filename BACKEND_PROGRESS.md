@@ -486,4 +486,48 @@ Move all persistent user data from `localStorage` into the PostgreSQL backend: f
 - No seed/demo data anywhere; test users/rows are created via the API and removed after each run.
 
 ### Next phase
-- Phase 10 — not started.
+- Phase 10 — security + multi-user isolation audit — not started.
+
+---
+
+## Phase 10 — Security + Multi-User Isolation Audit — COMPLETED
+
+### Objective
+Audit and harden the backend's security posture (auth, cookies, CORS, headers, input validation, rate limiting, env/secrets handling, hardcoded credentials) and prove multi-user isolation with a dedicated User A / User B test.
+
+### Audit findings (already solid — verified, no changes needed)
+- **Passwords**: `bcrypt.hash(password, 10)` on register; login runs `bcrypt.compare` even for unknown emails (timing-safe); DB stores only a `$2` bcrypt hash — never plaintext.
+- **Sessions**: 32 random bytes per token, only the SHA-256 hash stored (`sessions.token_hash`); cookie is `httpOnly`, `secure: config.env === "production"`, `sameSite: "lax"`, `maxAge` from `SESSION_TTL_MINUTES`.
+- **Headers / CORS**: `helmet()` active; `x-powered-by` disabled; CORS restricted to `config.corsOrigins` with `credentials: true`.
+- **Injection / validation**: every query is parameterized; dynamic columns and sort keys come only from whitelist constants (`FIELDS`, `SORT`); per-route field validators (names, emails, dates, arrays, enums).
+- **Ownership**: `user_id` is always taken from the authenticated session (`req.user.id`); body `userId`/`id` are ignored; cross-user access returns 404. Verified in tasks, notes, calendarEvents, meals, groceryItems, activityLog, goals, habits, customReminders, migrate, profile, stats.
+- **Error handling**: stack traces only in dev; known PG errors mapped to 400s; `safeUser` never exposes `password_hash`.
+- **Secrets / env**: `.env` and `.env.*` gitignored (only `.env.example` tracked); no secrets in any `/api/*` response (health reports only configured/connected/provider); session tokens never sent back in JSON.
+
+### What was added/fixed
+- **`server/middleware/rateLimit.js`** — `express-rate-limit` (new dependency `^8.6.2`): a strict limiter on `/api/auth/*` (default 20 req / 15 min per IP) and a general API limiter (default 1000 req / 15 min per IP), both with `standardHeaders` and JSON error bodies. Limits overridable via `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_API_MAX`.
+- **`server/app.js`** — mounted `apiLimiter` globally, `authLimiter` on the auth router, and raised the JSON body limit to `1mb` (so `/api/migrate` can import large local datasets).
+- **`server/config.js`** — production guard: with `NODE_ENV=production` the server refuses to start unless `DATABASE_URL` (or `DB_USER` + `DB_PASSWORD`) **and** `CORS_ORIGINS` are set, eliminating predictable dev-default credentials (`life_organizer`/`life_organizer`, embedded `postgres`/`postgres`) in production. `isProd` exposed.
+- **`.env.example`** — documented `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_API_MAX` and flagged `CORS_ORIGINS` as required in production.
+- **`tests/security.test.mjs`** (+ `package.json` script `test:security`) — full A/B isolation + security suite.
+
+### What the security test covers
+- **Complete isolation**: dev-only users A and B each create a Task, Note, and Calendar Event; A's lists contain only A's rows and B's lists only B's (name/id checks both directions). A read/edit/delete of B's task, note, and event all → **404** (9 checks), and B vs A likewise (9 checks); both users' data verified intact afterward.
+- **Session-only ownership**: task created with a spoofed body `userId`/`id` is owned by the creator (B gets 404); `POST /api/migrate` with a spoofed `userId` lands only under the caller (B's list unchanged).
+- **Stats / activity-log isolation**: `/api/stats` totals reflect only the requesting user's rows; activity log entries never leak across users.
+- **Secrets never leaked**: register/login/`/auth/me` responses contain no `password`/`password_hash`/`token`/`secret`; `/auth/me` exposes exactly `id,name,email,createdAt,updatedAt`; DB stores a bcrypt hash (never plaintext); `/api/health` contains no DB credentials or connection string.
+- **Rate limiting**: exhausting the auth limiter on a real `authRouter` returns **429** and standard `RateLimit-*` headers.
+- **Cleanup**: temp `sec-a-%@test.dev` / `sec-b-%@test.dev` users deleted; verified no leftovers.
+
+### Tests run (Phase 10)
+1. **`node tests/security.test.mjs`** — ALL SECURITY TESTS PASSED (isolation 18 404s, spoofed ownership, stats/log isolation, secret-leak checks, bcrypt-hash check, 429 burst, cleanup).
+2. **`node tests/db.test.mjs`**, **`test:auth`**, **`test:profile`**, **`test:tasks`**, **`test:notes`**, **`test:calendar`**, **`test:stats`**, **`test:collections`** — ALL PASSED (regression).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED. **`npm run lint`** — clean (0 warnings). **`npm run build`** — succeeds.
+4. Verified `.env` is gitignored and not tracked; production guard rejects missing `DATABASE_URL`/`CORS_ORIGINS` and accepts explicit production env vars.
+
+### Notes
+- Rate-limit counters are in-memory per process (fine for a single-instance app); a shared store would be needed behind multiple instances.
+- No seed/demo data anywhere; the A/B test users are created via the API and removed after the run.
+
+### Next phase
+- Phase 11 — not started.

@@ -22,7 +22,8 @@
     "test:notes": "node tests/notes.test.mjs",
     "test:calendar": "node tests/calendar.test.mjs",
     "test:stats": "node tests/stats.test.mjs",
-    "test:collections": "node tests/collections.test.mjs"
+    "test:collections": "node tests/collections.test.mjs",
+    "test:security": "node tests/security.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -30,6 +31,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
     "helmet": "^8.3.0",
     "node-pg-migrate": "^9.0.0",
     "pg": "^8.23.0",

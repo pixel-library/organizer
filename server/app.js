@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { config } from "./config.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { apiLimiter, authLimiter } from "./middleware/rateLimit.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
 import authRouter from "./routes/auth.js";
@@ -26,7 +27,8 @@ export function createApp() {
   app.disable("x-powered-by");
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigins, credentials: true }));
-  app.use(express.json());
+  app.use(apiLimiter);
+  app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
   app.use(requestLogger);
 
@@ -35,7 +37,7 @@ export function createApp() {
   });
 
   app.use(`${config.apiPrefix}/health`, healthRouter);
-  app.use(`${config.apiPrefix}/auth`, authRouter);
+  app.use(`${config.apiPrefix}/auth`, authLimiter, authRouter);
   app.use(`${config.apiPrefix}/profile`, profileRouter);
   app.use(`${config.apiPrefix}/tasks`, tasksRouter);
   app.use(`${config.apiPrefix}/notes`, notesRouter);
