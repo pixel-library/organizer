@@ -59,3 +59,72 @@
 
 ### Next phase
 - Design backend integration (Phase 1), preserving current behavior.
+
+---
+
+## Phase 1 — COMPLETED (Backend Foundation)
+
+### What was added
+Express 5 API backend in `server/` with environment config, DB placeholder, middleware (CORS, security headers via helmet, request logger), centralized error handling, and a health endpoint. The frontend is untouched and still runs fully offline on `localStorage`.
+
+### Backend structure
+```
+server/
+  index.js             — entry point, boot + graceful shutdown (SIGINT/SIGTERM)
+  app.js               — Express app assembly: helmet, cors, json, logger, routes, error handlers
+  config.js            — environment config (dotenv): port, apiPrefix, CORS origins, DB placeholders
+  db.js                — database placeholder (no driver yet; reports status to health)
+  middleware/
+    requestLogger.js   — dev request logging (method, url, status, duration)
+    errorHandler.js    — 404 handler + centralized JSON error handler (AppError aware)
+  routes/health.js     — GET /api/health
+  utils/AppError.js    — error class with statusCode + details
+```
+
+### Environment
+- `.env.example` created (PORT, NODE_ENV, API_PREFIX, CORS_ORIGINS, DATABASE_URL/DB_* placeholders).
+- `.gitignore` updated to ignore `.env` / `.env.*` (keeps `.env.example`).
+- No real `.env` committed; no secrets in the repo.
+
+### Scripts
+- `npm run server` — start API (default http://localhost:4000).
+- `npm run server:dev` — start with auto-reload (`node --watch`).
+
+### Endpoints
+- `GET /` → `{ service: "life-organizer-api", status: "ok" }`
+- `GET /api/health` → `{ status, service, uptime, timestamp, db: { configured, connected, provider } }`
+- Unknown routes → JSON 404 via centralized handler.
+- Security headers (CSP, HSTS, X-Frame-Options, etc.) set by helmet; CORS restricted to configured origins (default `http://localhost:5173`).
+
+### Database
+- Placeholder only. `connectDatabase()` no-ops, health reports `configured: false, connected: false, provider: "none"`. A real driver + connection lifecycle is deferred to a later phase.
+
+### Files changed (Phase 1)
+| File | Action |
+| --- | --- |
+| `server/index.js` | added |
+| `server/app.js` | added |
+| `server/config.js` | added |
+| `server/db.js` | added |
+| `server/middleware/requestLogger.js` | added |
+| `server/middleware/errorHandler.js` | added |
+| `server/routes/health.js` | added |
+| `server/utils/AppError.js` | added |
+| `.env.example` | added |
+| `.gitignore` | updated (ignore `.env`) |
+| `package.json` | updated (deps: express, cors, helmet, dotenv; scripts: server, server:dev) |
+| `README.md` | updated (backend section, tech stack, structure, roadmap) |
+| `tests/functional.mjs` | fixed — `globalThis.navigator` setter is read-only on Node ≥ 21; now uses `Object.defineProperty` (pre-existing failure, unrelated to backend) |
+
+### Tests run (Phase 1)
+1. Backend starts — `node server/index.js` listens on :4000, DB placeholder initialized.
+2. Health endpoint — `GET /api/health` returns 200 JSON with security headers; CORS preflight returns `Access-Control-Allow-Origin`; unknown route returns JSON 404.
+3. Frontend still starts — `npm run dev` serves HTTP 200; `npm run build` succeeds.
+4. No existing feature broken — `npm test` (jsdom functional suite): **ALL FUNCTIONAL TESTS PASSED** (after the Node 22 navigator compatibility fix above); `npm run lint` clean.
+
+### Notes
+- `vite.config.js` untouched (no dev proxy yet); frontend still has zero network calls.
+- Dependencies added: `express@^5.2.1`, `cors@^2.8.6`, `helmet@^8.3.0`, `dotenv@^17.4.2`.
+
+### Next phase
+- Phase 2 (backend integration) not started — deferred pending instructions.

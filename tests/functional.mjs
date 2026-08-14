@@ -13,7 +13,7 @@ const dom = new JSDOM("<!doctype html><html><body><div id='root'></div></body></
 const { window } = dom;
 globalThis.window = window;
 globalThis.document = window.document;
-globalThis.navigator = window.navigator;
+Object.defineProperty(globalThis, "navigator", { value: window.navigator, configurable: true });
 globalThis.HTMLElement = window.HTMLElement;
 globalThis.Node = window.Node;
 globalThis.MutationObserver = window.MutationObserver;

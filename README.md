@@ -14,7 +14,7 @@
 
 ## About
 
-Life Planner OS is a single-page workspace that brings together everything you need to stay on top of your life — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics — in one clean, dark-themed interface. All your data lives in your browser via `localStorage`, so there is no backend, no account, and no setup required. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours.
+Life Planner OS is a single-page workspace that brings together everything you need to stay on top of your life — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics — in one clean, dark-themed interface. All your data lives in your browser via `localStorage`, so there is no account and no setup required. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours. An Express API backend foundation is included for future server-synced features.
 
 ## Features
 
@@ -99,6 +99,21 @@ npm run dev
 
 The app will be available at `http://localhost:5173`.
 
+### Backend API (foundation)
+
+```bash
+npm run server       # start the Express API (default http://localhost:4000)
+npm run server:dev   # start with auto-reload
+```
+
+Copy `.env.example` to `.env` to customise the port, CORS origins, or database placeholders. The API exposes:
+
+```bash
+GET /api/health      # service + database status
+```
+
+The frontend does not use the API yet — it continues to run fully offline on `localStorage`.
+
 ### Production build
 
 ```bash
@@ -125,6 +140,7 @@ npm test            # functional + DOM-structure suite (jsdom + Vite SSR)
 | Linting | [oxlint](https://oxc.rs/) |
 | Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR |
 | Persistence | Browser `localStorage` |
+| API foundation | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) |
 
 ## Project Structure
 
@@ -156,6 +172,14 @@ life-organizer/
 │   └── index.css            # Global styles + theme system
 ├── tests/
 │   └── functional.mjs       # Functional + DOM-structure test suite
+├── server/
+│   ├── index.js             # Server entry point + graceful shutdown
+│   ├── app.js               # Express app assembly (middleware, routes, errors)
+│   ├── config.js            # Environment configuration
+│   ├── db.js                # Database placeholder
+│   ├── middleware/          # Request logger + centralized error handling
+│   ├── routes/health.js     # Health endpoint
+│   └── utils/AppError.js    # Error class
 ├── index.html               # HTML shell
 ├── vite.config.js           # Vite configuration
 └── package.json
@@ -169,7 +193,7 @@ All state is managed by the `useLifePlanner` hook (`src/hooks/useLifePlanner.js`
 
 - [ ] Notification support for background reminders (Service Worker)
 - [ ] PWA installation for offline use
-- [ ] Server-synced mode
+- [ ] Server-synced mode (backend foundation in place — see `server/`)
 
 ## Contributing
 
