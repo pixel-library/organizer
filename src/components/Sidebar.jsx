@@ -1,4 +1,11 @@
-export default function Sidebar({ currentView, onSwitchView, historyCount, mobileOpen = false, onMobileNavigate }) {
+export default function Sidebar({ currentView, onSwitchView, historyCount, user, onLogout, mobileOpen = false, onMobileNavigate }) {
+  const initials = (user?.name || "LP")
+    .split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
+
+  const logout = (e) => {
+    e.preventDefault();
+    if (confirm("Sign out of Life Planner?")) onLogout?.();
+  };
   const navItems = [
     { id: "dashboard", icon: "fa-solid fa-house", label: "Dashboard" },
     { id: "calendar", icon: "fa-regular fa-calendar-days", label: "Task calendar" },
@@ -62,12 +69,14 @@ export default function Sidebar({ currentView, onSwitchView, historyCount, mobil
           </div>
         </div>
         <div className="sidebar-profile">
-          <div className="profile-avatar">LP</div>
+          <div className="profile-avatar">{initials}</div>
           <div>
-            <strong>Life Planner</strong>
-            <span>Personal workspace</span>
+            <strong>{user?.name || "Life Planner"}</strong>
+            <span>{user?.email || "Personal workspace"}</span>
           </div>
-          <i className="fa-solid fa-chevron-right"></i>
+          <button className="profile-logout" onClick={logout} title="Sign out" aria-label="Sign out">
+            <i className="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
         </div>
       </div>
     </aside>

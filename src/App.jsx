@@ -21,6 +21,7 @@ import CommandPalette from "./components/CommandPalette";
 import SearchModal from "./components/SearchModal";
 import UndoToast from "./components/UndoToast";
 import ImportExportModal from "./components/ImportExportModal";
+import AuthScreen from "./components/AuthScreen";
 
 const VIEW_TITLES = {
   dashboard: "Dashboard Overview",
@@ -82,6 +83,7 @@ export default function App() {
   const {
     tasks, history, goals, notes, habits, meals, calendarEvents, groceryList,
     customReminders, settings, setSettings,
+    user, authStatus, authError, login, register, logout,
     toggleTaskCompletion, deleteTask, isTaskOverdue,
     addOrUpdateTask, bulkCompleteTasks, bulkDeleteTasks,
     updateGoalProgress, updateGoal, addGoal, deleteGoal,
@@ -387,12 +389,26 @@ export default function App() {
     setIoOpen(true);
   }, []);
 
+  if (authStatus === "loading") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted-2, #888)", fontSize: 14 }}>
+        <span>Loading your workspace…</span>
+      </div>
+    );
+  }
+
+  if (authStatus === "unauthenticated") {
+    return <AuthScreen onLogin={login} onRegister={register} error={authError} />;
+  }
+
   return (
     <div className="flex antialiased">
       <Sidebar
         currentView={currentView}
         onSwitchView={switchView}
         historyCount={history.length}
+        user={user}
+        onLogout={logout}
         mobileOpen={mobileNavOpen}
         onMobileNavigate={() => setMobileNavOpen(false)}
       />

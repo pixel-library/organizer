@@ -450,3 +450,40 @@ Connect the existing Dashboard and Analytics to real database data: one authenti
 
 ### Next phase
 - Phase 9 — remaining resource CRUD APIs (goals, habits, meals, grocery items, custom reminders, activity log) behind the auth middleware — not started.
+
+---
+
+## Phase 9 — User Data Storage Migration — COMPLETED
+
+### Objective
+Move all persistent user data from `localStorage` into the PostgreSQL backend: full authenticated CRUD for the remaining collections (goals, habits, meals, grocery items, custom reminders, activity log), a one-time migration endpoint for existing `localStorage` data, and a frontend rewrite so the app is fully API-backed behind a login/register screen.
+
+### What was built (backend)
+- **`server/db/migrations/20260814180000_add-user-data-columns.mjs`** — `goals.unit TEXT`, `grocery_items.unit TEXT` (the only schema gaps vs. the frontend models). Applied via `npm run db:migrate`.
+- **`server/routes/goals.js`**, **`habits.js`**, **`meals.js`**, **`groceryItems.js`**, **`customReminders.js`**, **`activityLog.js`** — full CRUD behind `requireAuth`, each mirroring the frontend model: fields mapped 1:1 (`startDate`/`startTime`/`endTime`, `estimatedTime`, `recurrenceEnd`, `customWeekdays` int[], `tags`/`history`/`days`/`ingredients` arrays, `overrides` jsonb), `user_id` always from the session (body `userId`/`id` ignored), cross-user access → 404, camelCase responses, `""` for empty dates/times, pg numerics → `Number()`, ids serialized as strings.
+- **`server/routes/migrate.js`** — `POST /api/migrate` (transactional): accepts `{ tasks?, notes?, calendarEvents?, goals?, habits?, meals?, groceryItems?, customReminders?, activityLog? }`, maps legacy field names, inserts everything for the authenticated user, returns `{ counts }`.
+- **`server/app.js`** — all six routers mounted at `/api/{goals,habits,meals,groceryItems,customReminders,activityLog}` + `/api/migrate`.
+- **`package.json`** — new script `test:collections`.
+
+### What was built (frontend)
+- **`src/api.js`** — API client (base from `globalThis.__LIFE_ORGANIZER_API__` → `VITE_API_URL` → `/api`), `credentials: "include"`, `ApiError` with status.
+- **`src/components/AuthScreen.jsx`** — login/register screen (name/email/password, validation, busy state).
+- **`src/hooks/useLifePlanner.js`** — rewritten to be API-backed: auth state machine (`loading` → `unauthenticated`/`ready`), `login`/`register`/`logout`, `/auth/me` boot check, one-time `migrateLocalStorage()`, optimistic mutations with server reconciliation (`temp-` ids, reload-on-error, 401 → logout), a `COLLECTIONS` table mapping app names → REST paths/migrate names (`history`→`/activityLog`, `groceryList`→`/groceryItems`), and a `sanitizeEvent()` guard for `customWeekdays`/`recurrenceEnd` nulls. All pure helpers and the full return surface are preserved (`DAY_NAMES`, `habitCompletionDates`, `computeHabitStats`, `dateKeyFrom`, `exportData`/`importData`/`replaceAllData`/`mergeData`, undo, etc.). `settings` remains in `localStorage`; user-data keys are cleared after a successful migrate.
+- **`src/App.jsx`** — auth gating (loading → AuthScreen → app), Sidebar receives `user` + `onLogout`.
+- **`src/components/Sidebar.jsx`** — real name/email, initials avatar, sign-out (confirm).
+- **`vite.config.js`** — `/api` dev proxy → `http://localhost:4000`.
+
+### Tests run (Phase 9)
+1. **`node tests/collections.test.mjs`** — ALL COLLECTIONS TESTS PASSED: full CRUD per collection (goals incl. `unit`, habits incl. `days`/`history`, meals incl. day default, grocery items incl. `unit`, custom reminders incl. type case-insensitivity, activity log); validation 400s; deletes; cross-user isolation (404s); `/api/migrate` counts + cleanup; refresh and logout/login persistence; no leftover rows.
+2. **`node tests/functional.mjs`** — ALL FUNCTIONAL TESTS PASSED (rewritten as a full integration test): real backend + cookie-jar fetch + `__LIFE_ORGANIZER_API__`; register via the AuthScreen UI; empty states + "no fake data" across all views; data-layer create/complete/delete/undo with backend persistence checks; export/import/merge/replace; theme persists to `localStorage` settings only; refresh (fresh component) and logout/login persistence; DOM-structure validation; no leftover rows.
+3. **`npm run test:db`**, **`test:auth`**, **`test:profile`**, **`test:tasks`**, **`test:notes`**, **`test:calendar`**, **`test:stats`** — ALL PASSED (regression).
+4. **`npm run lint`** — clean (0 warnings). **`npm run build`** — succeeds.
+
+### Notes
+- Frontend mutations compare ids with `String(id)` everywhere (server ids are strings).
+- `replaceAllData` now returns its promise (awaitable), and `setters`/`UNDO_SPECS` are memoized — lint-clean without disabling rules.
+- The functional suite was extended with a cookie-jar `fetch` wrapper (Node fetch has no cookie jar) and waits for the boot `loadAllCollections` to settle before mutating.
+- No seed/demo data anywhere; test users/rows are created via the API and removed after each run.
+
+### Next phase
+- Phase 10 — not started.

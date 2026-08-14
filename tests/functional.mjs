@@ -1,9 +1,20 @@
 import { JSDOM } from "jsdom";
 import { createRequire } from "module";
 import { createServer } from "vite";
+import { createApp } from "../server/app.js";
+import { connectDatabase, disconnectDatabase, getPool } from "../server/db.js";
 
 const require = createRequire(import.meta.url);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+const waitFor = async (cond, ms = 4000, step = 25) => {
+  const start = Date.now();
+  while (Date.now() - start < ms) {
+    if (cond()) return true;
+    await sleep(step);
+  }
+  return cond();
+};
 
 const dom = new JSDOM("<!doctype html><html><body><div id='root'></div></body></html>", {
   url: "http://localhost/",
@@ -19,7 +30,8 @@ globalThis.Node = window.Node;
 globalThis.MutationObserver = window.MutationObserver;
 globalThis.requestAnimationFrame = window.requestAnimationFrame;
 globalThis.localStorage = window.localStorage;
-
+window.confirm = () => true;
+window.alert = () => {};
 window.matchMedia = () => ({
   matches: false,
   media: "",
@@ -45,6 +57,38 @@ const assert = (name, cond, extra = "") => {
 const React = require("react");
 const { createRoot } = require("react-dom/client");
 
+/* ---- real backend + cookie jar ---- */
+await connectDatabase();
+const suffix = Date.now();
+const email = `func-${suffix}@test.dev`;
+const password = "correct-horse-battery-staple";
+await getPool().query("DELETE FROM users WHERE email LIKE $1", ["func-%@test.dev"]);
+
+const app = createApp();
+const httpServer = app.listen(0);
+await new Promise((resolve) => httpServer.once("listening", resolve));
+const { port } = httpServer.address();
+const base = `http://127.0.0.1:${port}/api`;
+globalThis.__LIFE_ORGANIZER_API__ = base;
+
+let cookieJar = "";
+const originalFetch = globalThis.fetch;
+const jarFetch = async (url, opts = {}) => {
+  const headers = new Headers(opts.headers || {});
+  if (cookieJar && !headers.has("cookie")) headers.set("cookie", cookieJar);
+  const res = await originalFetch(url, { ...opts, headers, credentials: "include" });
+  const setCookie = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
+  for (const sc of setCookie) {
+    const [pair] = sc.split(";");
+    const [name] = pair.split("=");
+    cookieJar = cookieJar.split(";").filter(c => c.trim().split("=")[0] !== name).join(";");
+    cookieJar = cookieJar ? `${cookieJar}; ${pair}` : pair;
+  }
+  return res;
+};
+globalThis.fetch = jarFetch;
+window.fetch = jarFetch;
+
 const server = await createServer({
   root: new URL("..", import.meta.url).pathname,
   server: { middlewareMode: true },
@@ -58,13 +102,40 @@ const { default: App } = await load("/src/App.jsx");
 const rootEl = document.getElementById("root");
 const root = createRoot(rootEl);
 root.render(React.createElement(App));
-await sleep(150);
+await sleep(100);
 
 const bodyText = () => document.body.textContent || "";
+const clickEl = (el) => { if (el) el.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true })); };
+
+/* ---- AUTH GATE ---- */
+assert("Auth screen shows when logged out", bodyText().includes("Welcome back") || bodyText().includes("Create your account"));
+
+/* ---- REGISTER VIA UI ---- */
+const setNativeValue = (el, value) => {
+  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+  setter.call(el, value);
+  el.dispatchEvent(new window.Event("input", { bubbles: true }));
+};
+
+const toggle = [...document.querySelectorAll(".standard-panel button")].find(b => (b.textContent || "").includes("Create one"));
+clickEl(toggle);
+await sleep(30);
+
+const form = document.querySelector('form[aria-label="Authentication form"]');
+assert("Auth form rendered", form !== null);
+const inputs = form.querySelectorAll("input");
+assert("Auth form has name/email/password inputs", inputs.length === 3, `got ${inputs.length}`);
+
+const [nameInput, emailInput, passwordInput] = inputs;
+setNativeValue(nameInput, "Functional Tester");
+setNativeValue(emailInput, email);
+setNativeValue(passwordInput, password);
+form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+
+await waitFor(() => bodyText().includes("Welcome to Organizer"));
+assert("Register via UI loads the workspace", bodyText().includes("Welcome to Organizer"));
 
 /* ---- FRESH INSTALL EMPTY STATES ---- */
-assert("Dashboard welcome empty state renders", bodyText().includes("Welcome to Organizer"));
-
 const clickNav = (id) => {
   const el = document.getElementById(id);
   if (el) el.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
@@ -96,14 +167,15 @@ const leaked = ["Morning Code Review", "Client Sync Meeting", "Gym Session", "Wo
 const leakedFound = leaked.filter(t => bodyText().includes(t));
 assert("No fake/sample content in DOM", leakedFound.length === 0, "found: " + leakedFound.join(", "));
 
-const keys = Object.keys(globalThis.localStorage).filter(k => k.startsWith("life_planner_"));
-assert("settings key exists (theme persistence)", keys.includes("life_planner_settings"));
-let allEmpty = true;
-for (const k of keys.filter(k => k !== "life_planner_settings")) {
-  const v = JSON.parse(globalThis.localStorage.getItem(k));
-  if (!Array.isArray(v) || v.length !== 0) { allEmpty = false; console.log("  non-empty key:", k); }
-}
-assert("No fake data persisted on fresh install (data keys empty arrays)", allEmpty);
+const userDataKeys = Object.keys(globalThis.localStorage).filter(k => k.startsWith("life_planner_") && k !== "life_planner_settings");
+assert("No user data persisted to localStorage after register", userDataKeys.length === 0, userDataKeys.join(", "));
+
+const serverEmpty = async (path) => (await (await jarFetch(`${base}${path}`)).json()).length === 0;
+assert("Backend starts empty (tasks)", await serverEmpty("/tasks"));
+assert("Backend starts empty (goals)", await serverEmpty("/goals"));
+assert("Backend starts empty (habits)", await serverEmpty("/habits"));
+assert("Backend starts empty (groceryItems)", await serverEmpty("/groceryItems"));
+assert("Backend starts empty (customReminders)", await serverEmpty("/customReminders"));
 
 /* ---- DATA LAYER ---- */
 const hookModule = await server.ssrLoadModule("/src/hooks/useLifePlanner.js");
@@ -116,7 +188,8 @@ function Harness() {
 }
 const harnessRoot = createRoot(document.createElement("div"));
 harnessRoot.render(React.createElement(Harness));
-await sleep(50);
+await waitFor(() => exposed.authStatus === "ready");
+await sleep(600);
 
 const h = exposed;
 
@@ -125,41 +198,53 @@ assert("Initial events empty", h.calendarEvents.length === 0);
 assert("Initial habits empty", h.habits.length === 0);
 assert("Initial reminders empty", h.customReminders.length === 0);
 
-/* create + complete + delete + undo */
+/* create + complete + delete + undo (server-persisted) */
 h.addOrUpdateTask({ name: "Buy groceries", date: "2026-08-14", priority: "Yellow", reminder: "none", type: "Personal" });
-await sleep(30);
-assert("Task created", h.tasks.length === 1 && h.tasks[0].name === "Buy groceries");
-assert("Task persisted to localStorage", JSON.parse(globalThis.localStorage.getItem("life_planner_tasks")).length === 1);
+await waitFor(() => h.tasks.length === 1);
+assert("Task created", h.tasks[0].name === "Buy groceries");
+assert("Task id is a string (backend)", typeof h.tasks[0].id === "string", typeof h.tasks[0].id);
+
+const serverTasks = await (await jarFetch(`${base}/tasks`)).json();
+assert("Task persisted to backend", serverTasks.length === 1 && serverTasks[0].name === "Buy groceries");
 
 const taskId = h.tasks[0].id;
 h.toggleTaskCompletion(taskId);
-await sleep(30);
+await waitFor(() => h.tasks.find(t => t.id === taskId).completed === true);
 assert("Task completed", h.tasks.find(t => t.id === taskId).completed === true);
+assert("Task completed on backend", (await (await jarFetch(`${base}/tasks`)).json())[0].completed === true);
 
 h.deleteTask(taskId);
-await sleep(30);
+await waitFor(() => h.tasks.length === 0);
 assert("Task deleted", h.tasks.length === 0);
 assert("Undo available after delete", h.undoState !== null);
 
 h.undoLastDeletion();
-await sleep(30);
-assert("Undo restores task", h.tasks.length === 1 && h.tasks[0].name === "Buy groceries");
+await waitFor(() => h.tasks.length === 1);
+assert("Undo restores task", h.tasks[0].name === "Buy groceries");
+assert("Undo restored task on backend", (await (await jarFetch(`${base}/tasks`)).json()).length === 1);
 
 /* habits */
 h.addHabit("Read 10 pages");
-await sleep(30);
+await waitFor(() => h.habits.length === 1);
 assert("Habit created", h.habits.length === 1);
 h.toggleHabitDay(0, 0);
-await sleep(30);
-assert("Habit toggle records history", Array.isArray(h.habits[0].history) && h.habits[0].history.length >= 1);
+await waitFor(() => (h.habits[0].history || []).length >= 1);
+assert("Habit toggle records history", h.habits[0].history.length >= 1);
+assert("Habit persisted to backend", (await (await jarFetch(`${base}/habits`)).json()).length === 1);
 
 /* custom reminders */
 h.addCustomReminder({ title: "Water plants", date: "2026-08-15", time: "08:00", type: "Custom" });
-await sleep(30);
+await waitFor(() => h.customReminders.length === 1);
 assert("Custom reminder created", h.customReminders.length === 1);
 h.deleteCustomReminder(h.customReminders[0].id);
-await sleep(30);
+await waitFor(() => h.customReminders.length === 0);
 assert("Custom reminder deleted", h.customReminders.length === 0);
+assert("Reminder deleted on backend", (await (await jarFetch(`${base}/customReminders`)).json()).length === 0);
+
+/* goals */
+h.addGoal({ name: "Read 12 books", target: 12, current: 4, unit: "books" });
+await waitFor(() => h.goals.length === 1);
+assert("Goal created + persisted", h.goals.length === 1 && (await (await jarFetch(`${base}/goals`)).json()).length === 1);
 
 /* import / export */
 const json = JSON.parse(h.exportData());
@@ -176,20 +261,40 @@ const backup = {
   history: [], goals: [], notes: [], habits: [], meals: [], calendarEvents: [], groceryList: [], customReminders: []
 };
 const merged = h.mergeData(backup);
-assert("Merge adds only the new record", merged.tasks === 1);
-await sleep(30);
-assert("Merge preserves existing + adds new (2 total)", h.tasks.length === 2);
-assert("Merged task present", h.tasks.some(t => t.name === "New merged task"));
+assert("Merge adds only the new record", merged.tasks === 1, JSON.stringify(merged));
+await waitFor(() => h.tasks.length === 2);
+assert("Merge preserves existing + adds new (2 total)", h.tasks.some(t => t.name === "New merged task"));
+assert("Merged task on backend", (await (await jarFetch(`${base}/tasks`)).json()).length === 2);
 
 const clean = { tasks: [], history: [], goals: [], notes: [], habits: [], meals: [], calendarEvents: [], groceryList: [], customReminders: [] };
-h.replaceAllData(clean);
-await sleep(30);
+
+const waitServerCount = async (path, n) => {
+  const s = Date.now();
+  while (Date.now() - s < 4000) {
+    if ((await (await jarFetch(`${base}${path}`)).json()).length === n) return true;
+    await sleep(100);
+  }
+  return false;
+};
+
+await h.replaceAllData(clean);
 assert("Replace all clears tasks", h.tasks.length === 0 && h.habits.length === 0);
+assert("Replace all cleared on backend", await waitServerCount("/tasks", 0));
+
+/* re-seed for persistence checks below */
+h.addOrUpdateTask({ name: "Ship feature", date: "2026-08-14", priority: "Red", reminder: "10min", type: "Task" });
+h.addHabit("Meditate");
+await waitFor(() => h.tasks.length === 1 && h.habits.length === 1);
+await waitServerCount("/tasks", 1);
+await waitServerCount("/habits", 1);
+await waitServerCount("/activityLog", 1);
 
 /* theme */
 h.setSettings({ theme: "light" });
 await sleep(30);
-assert("setSettings persists theme", h.settings.theme === "light");
+assert("setSettings persists theme to localStorage", JSON.parse(globalThis.localStorage.getItem("life_planner_settings")).theme === "light");
+const userKeysAfter = Object.keys(globalThis.localStorage).filter(k => k.startsWith("life_planner_") && k !== "life_planner_settings");
+assert("Theme change does not write user data to localStorage", userKeysAfter.length === 0, userKeysAfter.join(", "));
 
 /* pure helpers */
 const { dateKeyFrom, habitCompletionDates, computeHabitStats } = hookModule;
@@ -202,11 +307,30 @@ const dates = [...habitCompletionDates({ days: [true, false, false, false, false
 assert("habitCompletionDates unique", new Set(dates).size === dates.length);
 assert("habitCompletionDates includes today", dates.includes(d0));
 
-/* ---- DOM STRUCTURE VALIDATION ----
-   Walks the rendered DOM and enforces the HTML content model for every
-   parent/child pair. React creates elements programmatically, so invalid
-   nesting (e.g. a div inside tbody) appears literally in the DOM instead of
-   being repaired by the HTML parser — this catches it. */
+/* ---- REFRESH PERSISTENCE (fresh component instance, same session) ---- */
+const exposed2 = {};
+function Harness2() {
+  Object.assign(exposed2, useLifePlanner());
+  return React.createElement("div");
+}
+const harnessRoot2 = createRoot(document.createElement("div"));
+harnessRoot2.render(React.createElement(Harness2));
+await waitFor(() => exposed2.authStatus === "ready" && exposed2.tasks.length === 1 && exposed2.habits.length === 1);
+assert("Refresh reloads tasks from backend", exposed2.tasks.length === 1 && exposed2.tasks[0].name === "Ship feature");
+assert("Refresh reloads habits from backend", exposed2.habits.length === 1);
+assert("Refresh reloads history (activity log)", Array.isArray(exposed2.history));
+
+/* ---- LOGOUT / LOGIN PERSISTENCE ---- */
+h.logout();
+await waitFor(() => h.authStatus === "unauthenticated");
+assert("Logout clears collections client-side", h.tasks.length === 0 && h.user === null);
+
+h.login(email, password);
+await waitFor(() => h.authStatus === "ready" && h.tasks.length === 1 && h.habits.length === 1 && h.history.length >= 1);
+assert("Login reloads data from backend", h.tasks[0].name === "Ship feature" && h.habits.length === 1);
+assert("Login reloads activity history", h.history.length >= 1);
+
+/* ---- DOM STRUCTURE VALIDATION ---- */
 const PHRASING = new Set(["A","ABBR","B","BDI","BDO","BR","CITE","CODE","DATA","DFN","EM","I","KBD","MARK","METER","Q","RP","RT","RUBY","S","SAMP","SMALL","SPAN","STRONG","SUB","SUP","TIME","U","VAR","WBR","IMG","PICTURE","CANVAS","MAP","OBJECT","OUTPUT","PROGRESS","SVG","MATH","LABEL","INPUT","SELECT","TEXTAREA","BUTTON"]);
 const INTERACTIVE = new Set(["BUTTON","A","INPUT","SELECT","TEXTAREA","LABEL","IFRAME","OBJECT","EMBED","VIDEO","AUDIO"]);
 const invalidChild = (pn, cn) => {
@@ -221,7 +345,7 @@ const invalidChild = (pn, cn) => {
   if (pn === "LABEL") return cn === "LABEL";
   return false;
 };
-const collectStructure = (root) => {
+const collectStructure = (rootEl) => {
   const errors = [];
   const walk = (node) => {
     if (node.nodeType !== 1) return;
@@ -232,14 +356,13 @@ const collectStructure = (root) => {
       walk(child);
     }
   };
-  walk(root);
+  walk(rootEl);
   return errors;
 };
-const checkStructure = (name, root = document.body) => {
-  const errors = collectStructure(root);
+const checkStructure = (name, rootEl = document.body) => {
+  const errors = collectStructure(rootEl);
   assert(`DOM structure valid (${name})`, errors.length === 0, errors.slice(0, 8).join(" | "));
 };
-const clickEl = (el) => { if (el) el.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true })); };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 const noop = () => {};
 const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -466,6 +589,15 @@ for (const mode of ["Day", "Week", "Year", "Agenda"]) {
 
 checkStructure("app: full render");
 
+/* ---- cleanup ---- */
+await getPool().query("DELETE FROM users WHERE email LIKE $1", ["func-%@test.dev"]);
+const leftovers = await getPool().query(
+  "SELECT (SELECT count(*)::int FROM tasks) + (SELECT count(*)::int FROM notes) + (SELECT count(*)::int FROM calendar_events) + (SELECT count(*)::int FROM goals) + (SELECT count(*)::int FROM habits) + (SELECT count(*)::int FROM meals) + (SELECT count(*)::int FROM grocery_items) + (SELECT count(*)::int FROM custom_reminders) + (SELECT count(*)::int FROM activity_log) AS n"
+);
+assert("no leftover test rows", leftovers.rows[0].n === 0, `${leftovers.rows[0].n} rows`);
+
 await server.close();
+httpServer.close();
+await disconnectDatabase();
 console.log(failures === 0 ? "\nALL FUNCTIONAL TESTS PASSED" : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

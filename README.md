@@ -93,8 +93,13 @@ cd organizer
 # 2. Install dependencies
 npm install
 
-# 3. Start the dev server
-npm run dev
+# 3. Start the database + API (the app stores all data server-side)
+npm run db:start     # local PostgreSQL (embedded; data dir: .pgdata/)
+npm run db:migrate   # apply schema migrations
+
+# 4. Start the dev server
+npm run dev          # frontend on http://localhost:5173 (proxies /api)
+npm run server       # API on http://localhost:4000 (second terminal)
 ```
 
 The app will be available at `http://localhost:5173`.
@@ -135,6 +140,40 @@ PUT  /api/calendarEvents/:id    # update an event — partial merge semantics (r
 PATCH /api/calendarEvents/:id   # update an event — partial merge semantics (requires auth)
 DELETE /api/calendarEvents/:id  # delete an event (requires auth)
 GET  /api/stats           # dashboard + analytics metrics (requires auth)
+GET  /api/goals           # list goals (requires auth)
+POST /api/goals           # create a goal (ownership from session, requires auth)
+GET  /api/goals/:id       # read one goal (requires auth)
+PUT  /api/goals/:id       # update a goal — partial merge semantics (requires auth)
+PATCH /api/goals/:id      # update a goal — partial merge semantics (requires auth)
+DELETE /api/goals/:id     # delete a goal (requires auth)
+GET  /api/habits          # list habits (requires auth)
+POST /api/habits          # create a habit (ownership from session, requires auth)
+GET  /api/habits/:id      # read one habit (requires auth)
+PUT  /api/habits/:id      # update a habit — partial merge semantics (requires auth)
+PATCH /api/habits/:id     # update a habit — partial merge semantics (requires auth)
+DELETE /api/habits/:id    # delete a habit (requires auth)
+GET  /api/meals           # list meals (requires auth)
+POST /api/meals           # create a meal (ownership from session, requires auth)
+GET  /api/meals/:id       # read one meal (requires auth)
+PUT  /api/meals/:id       # update a meal — partial merge semantics (requires auth)
+PATCH /api/meals/:id      # update a meal — partial merge semantics (requires auth)
+DELETE /api/meals/:id     # delete a meal (requires auth)
+GET  /api/groceryItems    # list grocery items (requires auth)
+POST /api/groceryItems    # create a grocery item (ownership from session, requires auth)
+GET  /api/groceryItems/:id # read one grocery item (requires auth)
+PUT  /api/groceryItems/:id # update a grocery item — partial merge semantics (requires auth)
+PATCH /api/groceryItems/:id # update a grocery item — partial merge semantics (requires auth)
+DELETE /api/groceryItems/:id # delete a grocery item (requires auth)
+GET  /api/customReminders # list custom reminders (requires auth)
+POST /api/customReminders # create a custom reminder (ownership from session, requires auth)
+GET  /api/customReminders/:id # read one custom reminder (requires auth)
+PUT  /api/customReminders/:id # update a custom reminder — partial merge semantics (requires auth)
+PATCH /api/customReminders/:id # update a custom reminder — partial merge semantics (requires auth)
+DELETE /api/customReminders/:id # delete a custom reminder (requires auth)
+GET  /api/activityLog     # list activity-log entries (requires auth)
+POST /api/activityLog     # create an activity-log entry (ownership from session, requires auth)
+DELETE /api/activityLog/:id # delete an activity-log entry (requires auth)
+POST /api/migrate         # one-time localStorage → database import (transactional, requires auth)
 ```
 
 Calendar events use the existing event fields: `title`, `start`/`end` (dates), `startTime`/`endTime`, `allDay`, `category`, `location`, `description`, `reminder`, `recurrence`, `recurrenceEnd`, `customWeekdays`, `overrides`. `title` and `start` are required on create.
@@ -145,9 +184,11 @@ Notes support the existing note features: create, edit, delete, pin (`pinned`), 
 
 Tasks support the existing task-manager features: create, edit, delete, complete (`completed`), priority (`Red`/`Yellow`/`Green`), due date (`date`, `time`), category (`type`), plus server-side **search** (`?search=`), **filters** (`?status=pending|completed|overdue`, `?priority=`, `?type=`, `?from=`/`?to=` date range), and **sorting** (`?sort=dateAsc|dateDesc|priority|name|createdAt|updatedAt`).
 
-Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The protected routes (`/api/auth/me`, `/api/profile`, `/api/tasks`) use the `requireAuth` middleware; the user is always resolved from the authenticated session — a `userId` supplied by the client is never trusted, and every task query enforces `user_id = authenticated_user_id` (cross-user reads/edits/deletes return 404).
+Authentication uses secure, **httpOnly** session cookies (server-side `sessions` table, bcrypt password hashing, sliding expiration). Passwords are never stored in `localStorage`, `sessionStorage`, or frontend JavaScript, and are never returned by the API. The protected routes use the `requireAuth` middleware; the user is always resolved from the authenticated session — a `userId` supplied by the client is never trusted, and every collection query enforces `user_id = authenticated_user_id` (cross-user reads/edits/deletes return 404).
 
-The frontend does not use the API yet — it continues to run fully offline on `localStorage`.
+`POST /api/migrate` performs a one-time import of the old `localStorage` data into the database in a single transaction: it accepts `{ tasks?, notes?, calendarEvents?, goals?, habits?, meals?, groceryItems?, customReminders?, activityLog? }`, maps the legacy field names the frontend used to the database schema, and inserts all rows for the authenticated user, returning `{ counts }`.
+
+The frontend is now fully API-backed: it starts at an **auth screen** (create account / sign in), then loads every collection from the backend over the session cookie. A one-time migration moves any existing `localStorage` data into the database on first sign-in; from then on `localStorage` only holds the UI preference `settings` (theme). The Vite dev server proxies `/api` to the API (default `http://localhost:4000`).
 
 ### Database (PostgreSQL)
 
@@ -165,6 +206,7 @@ npm run test:tasks   # tasks API test suite (needs a running DB)
 npm run test:notes   # notes API test suite (needs a running DB)
 npm run test:calendar # calendar events API test suite (needs a running DB)
 npm run test:stats    # dashboard/analytics stats API test suite (needs a running DB)
+npm run test:collections # goals/habits/meals/grocery/custom-reminders/activity-log/migrate API tests (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
@@ -193,9 +235,9 @@ npm test            # functional + DOM-structure suite (jsdom + Vite SSR)
 | Icons | [Font Awesome 6](https://fontawesome.com/) |
 | Typography | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) |
 | Linting | [oxlint](https://oxc.rs/) |
-| Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR |
-| Persistence | Browser `localStorage` |
-| API foundation | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) |
+| Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR + Node test runner |
+| Persistence | PostgreSQL (all user data) + browser `localStorage` (theme/settings only) |
+| API foundation | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) + [cookie-parser](https://github.com/expressjs/cookie-parser) |
 | Database | [PostgreSQL](https://www.postgresql.org/) + [node-pg-migrate](https://salsita.github.io/node-pg-migrate/) + [embedded-postgres](https://github.com/leinelissen/embedded-postgres) (dev) |
 
 ## Project Structure
@@ -248,13 +290,13 @@ life-organizer/
 
 ## How It Works
 
-All state is managed by the `useLifePlanner` hook (`src/hooks/useLifePlanner.js`). Every change is persisted to `localStorage` under the `life_planner_*` key namespace, so your data survives page reloads and browser sessions. On first load every collection starts empty — the UI guides you through your first task, event, habit, or note instead of seeding sample content. Back up your data anytime with the export feature, and restore or merge it later.
+The app is **fully API-backed and account-based**. On first load you see an auth screen — create an account or sign in — and the backend issues a secure **httpOnly session cookie**. From then on all state is managed by the `useLifePlanner` hook (`src/hooks/useLifePlanner.js`), which loads and saves every collection (`tasks`, `notes`, `calendarEvents`, `goals`, `habits`, `meals`, `groceryList`, `customReminders`, `history`) through the REST API; updates are optimistic with server reconciliation, and data survives reloads and sign-in/sign-out because it lives in PostgreSQL. If you had existing `localStorage` data, it is migrated into your account once on first sign-in, then the `life_planner_*` user-data keys are cleared — only the `settings` (theme) preference stays in `localStorage`. Every collection starts empty for a new account — the UI guides you through your first task, event, habit, or note instead of seeding sample content. Back up your data anytime with the export feature, and restore or merge it later.
 
 ## Roadmap
 
+- [x] Server-synced, account-based mode (Express API + PostgreSQL, all collections API-backed)
 - [ ] Notification support for background reminders (Service Worker)
 - [ ] PWA installation for offline use
-- [ ] Server-synced mode (backend foundation in place — see `server/`)
 
 ## Contributing
 
