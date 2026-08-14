@@ -471,6 +471,60 @@ clickEl(document.querySelector(".sidebar-backdrop"));
 await sleep(60);
 assert("Mobile: backdrop click closes sidebar", !sidebar.classList.contains("open"));
 
+/* ================= SEARCH + FILTER: UI ================= */
+const createTaskViaUi = async (name, type) => {
+  clickEl(document.querySelector(".header-create"));
+  await waitFor(() => document.querySelector("#create-modal .modal-save") !== null);
+  await fillModal({ "Title / Task Name": name, Type: type });
+  await saveModal();
+  await waitFor(() => bodyText().includes(name));
+};
+clickNav("nav-tasks");
+await sleep(60);
+await createTaskViaUi("Searchable Alpha Task", "Task");
+await createTaskViaUi("Searchable Beta Meeting", "Meeting");
+
+const searchInput = document.querySelector('input[aria-label="Search tasks"]');
+setNativeValue(searchInput, "beta");
+await sleep(80);
+assert("Task search narrows the list", bodyText().includes("Searchable Beta Meeting") && !bodyText().includes("Searchable Alpha Task"));
+setNativeValue(searchInput, "zzz-no-match");
+await sleep(80);
+assert("Task search empty state ('No tasks found')", bodyText().includes("No tasks found"));
+setNativeValue(searchInput, "");
+const typeFilter = document.querySelector('select[aria-label="Filter by type"]');
+setNativeValue(typeFilter, "Meeting");
+await sleep(80);
+assert("Task type filter shows only meetings", bodyText().includes("Searchable Beta Meeting") && !bodyText().includes("Searchable Alpha Task"));
+setNativeValue(typeFilter, "all");
+const clearFiltersBtn = document.querySelector('.task-tool-btn[title="Clear filters"]');
+clickEl(clearFiltersBtn);
+await sleep(80);
+assert("Clear filters restores full list", bodyText().includes("Searchable Alpha Task") && bodyText().includes("Searchable Beta Meeting"));
+
+/* notes search */
+clickNav("nav-notes");
+await sleep(60);
+clickEl(document.querySelector(".header-create"));
+await waitFor(() => document.querySelector("#create-modal .modal-save") !== null);
+await fillModal({ Title: "Searchable Note Zebra", Content: "Search me out." });
+await saveModal();
+await waitFor(() => bodyText().includes("Searchable Note Zebra"));
+const noteSearch = document.querySelector('input[placeholder="Search notes..."]');
+setNativeValue(noteSearch, "zebra");
+await sleep(80);
+assert("Notes search narrows the list", bodyText().includes("Searchable Note Zebra") && !bodyText().includes("No notes yet"));
+setNativeValue(noteSearch, "nomatch");
+await sleep(80);
+assert("Notes search empty state ('No matching notes')", bodyText().includes("No matching notes"));
+setNativeValue(noteSearch, "");
+
+/* clean up the search/filter fixtures so later checks stay deterministic */
+const pendingTaskIds = (await (await jarFetch(`${base}/tasks`)).json()).filter((t) => /^Searchable/.test(t.name)).map((t) => t.id);
+for (const id of pendingTaskIds) await jarFetch(`${base}/tasks/${id}`, { method: "DELETE" });
+const zebraNoteId = (await (await jarFetch(`${base}/notes`)).json()).find((n) => n.title === "Searchable Note Zebra")?.id;
+if (zebraNoteId) await jarFetch(`${base}/notes/${zebraNoteId}`, { method: "DELETE" });
+
 /* ================= ERROR CHECKS ================= */
 const unexpected4xx = networkStatuses.filter((s) => {
   const [status] = s.split(" ");

@@ -14,7 +14,7 @@
 
 ## About
 
-Life Planner OS is a single-page workspace that brings together everything you need to stay on top of your life — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics — in one clean, dark-themed interface. All your data lives in your browser via `localStorage`, so there is no account and no setup required. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours. An Express API backend foundation is included for future server-synced features.
+Life Planner OS is a full-stack, account-based workspace that brings together everything you need to stay on top of your life — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics — in one clean, dark-themed interface. All user data is stored securely in PostgreSQL behind an Express API, protected by session authentication and per-user ownership. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours, synced to your account across sessions and devices.
 
 ## Features
 
@@ -79,10 +79,6 @@ Life Planner OS is a single-page workspace that brings together everything you n
 
 ## Getting Started
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) 18 or newer
-- npm (bundled with Node.js)
-
 ### Installation
 
 ```bash
@@ -92,19 +88,54 @@ cd organizer
 
 # 2. Install dependencies
 npm install
-
-# 3. Start the database + API (the app stores all data server-side)
-npm run db:start     # local PostgreSQL (embedded; data dir: .pgdata/)
-npm run db:migrate   # apply schema migrations
-
-# 4. Start the dev server
-npm run dev          # frontend on http://localhost:5173 (proxies /api)
-npm run server       # API on http://localhost:4000 (second terminal)
 ```
 
-The app will be available at `http://localhost:5173`.
+### Environment setup
 
-### Backend API (foundation)
+```bash
+cp .env.example .env
+```
+
+The defaults are fine for local development (embedded PostgreSQL, API on `http://localhost:4000`, app origin `http://localhost:5173`). In **production** the server refuses to start unless `DATABASE_URL` (or `DB_USER` + `DB_PASSWORD`) **and** `CORS_ORIGINS` are set. Available settings are documented in `.env.example`.
+
+### Database setup
+
+```bash
+npm run db:start     # boot the local PostgreSQL server (data dir: .pgdata/)
+```
+
+`db:start` runs a real PostgreSQL server in user-space via `embedded-postgres` — no install or root needed. Alternatively, set `DATABASE_URL` to any existing PostgreSQL instance and skip `db:start`.
+
+### Migration commands
+
+```bash
+npm run db:migrate   # apply schema migrations
+npm run db:down      # roll back the latest migration
+npm run db:rebuild   # roll back + re-apply (dev)
+```
+
+### Backend start
+
+```bash
+npm run server       # API on http://localhost:4000
+npm run server:dev   # API with auto-reload
+```
+
+### Frontend start
+
+```bash
+npm run dev          # app on http://localhost:5173 (proxies /api → :4000)
+```
+
+Open `http://localhost:5173` in your browser.
+
+### Authentication overview
+
+The app is **account-based**: on first load you create an account (name, email, password) or sign in. Passwords are hashed with bcrypt server-side (never stored or transmitted in plaintext); sessions use secure, **httpOnly** cookies backed by a server-side `sessions` table with sliding expiration. The authenticated user is always resolved from the session cookie — a `userId` supplied by the client is never trusted, and every collection query enforces `user_id = <session user>`. Password hashes, session tokens, and secrets are never returned by the API and never stored in the frontend.
+
+---
+
+### Backend API
 
 ```bash
 npm run server       # start the Express API (default http://localhost:4000)
@@ -207,6 +238,8 @@ npm run test:notes   # notes API test suite (needs a running DB)
 npm run test:calendar # calendar events API test suite (needs a running DB)
 npm run test:stats    # dashboard/analytics stats API test suite (needs a running DB)
 npm run test:collections # goals/habits/meals/grocery/custom-reminders/activity-log/migrate API tests (needs a running DB)
+npm run test:security # auth isolation + security test suite (needs a running DB)
+npm run test:complete # full end-to-end UI test suite (needs a running DB)
 ```
 
 Start order: `npm run db:start` (in one terminal) → `npm run db:migrate` → `npm run server`. Point `DATABASE_URL` at any existing PostgreSQL instance to use it instead of the embedded one. The migration creates the schema without any seed data — all tables start empty.
@@ -224,7 +257,6 @@ npm run preview     # preview the production build locally
 npm run lint        # runs oxlint with React & Oxc rules
 npm test            # functional + DOM-structure suite (jsdom + Vite SSR)
 ```
-
 ## Tech Stack
 
 | Layer | Technology |

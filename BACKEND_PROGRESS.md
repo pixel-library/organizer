@@ -563,3 +563,55 @@ End-to-end test of the full application through the real UI (React in jsdom + Vi
 2. Regression: **db** (47), **auth** (30), **profile** (26), **tasks** (54), **notes** (45), **calendar** (51), **stats** (82), **collections** (83), **security** (52) — ALL PASSED (470 assertions).
 3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED. **`npm run lint`** — clean (0 warnings). **`npm run build`** — succeeds. **`npm run db:migrate`** — up to date.
 4. Cleanup verified: no leftover test rows or test users in the database after the run.
+
+---
+
+## Phase 12 — FINAL PRODUCTION READINESS CHECK — COMPLETED
+
+### Project status
+**FULL-STACK MIGRATION COMPLETED** — the frontend-only `localStorage` organizer is now a production-shaped full-stack application: React 19 SPA + Express 5 API + PostgreSQL, account-based, session-authenticated, per-user ownership, rate-limited, and verified end-to-end. All 12 phases complete.
+
+### Final readiness checklist (all verified by test, not by assertion alone)
+
+**SECURITY — PASS**
+- No plaintext passwords: `bcrypt.hash(password, 10)` on register; `bcrypt.compare` on login (timing-safe even for unknown emails); DB stores only the `$2` bcrypt hash.
+- Password hashes never returned: `safeUser()` (`server/utils/sessions.js`) exposes only `id, name, email, createdAt, updatedAt`; register/login/`/auth/me` responses verified to never include `password`/`password_hash`/`token`/`secret`.
+- No secrets in the frontend: grep of `src/` for credentials/keys/tokens → none; passwords are never in `localStorage` (only the theme `settings` key remains there).
+- `.env` ignored (git `check-ignore` confirms) and `.env.example` exists with every setting documented.
+- Authentication works: register/login/logout/`/me`, httpOnly cookie, sliding session expiry, 401 on missing/garbage cookies (auth suite, 33 asserts).
+- User isolation works: cross-user read/edit/delete → 404 in both directions (security suite, 52 asserts; complete suite UI check).
+- No hardcoded user IDs: ownership always from `req.user.id`; body `userId`/`id` ignored; spoofed-ownership test.
+- No cross-user access: every query enforces `user_id = <session user>` (verified in all 10 data routes).
+
+**DATABASE — PASS**
+- Migrations work: `npm run db:migrate` clean; `test:db` (47 asserts) covers schema/constraints.
+- Foreign keys work: all data tables FK → `users` with `ON DELETE CASCADE`; sessions FK → users; verified by db suite.
+- Unique email works: `users_email_unique` constraint + case-insensitive `lower(email)` unique index; duplicate registration → 409.
+- User-owned data has `user_id`: every table (`tasks`, `notes`, `calendar_events`, `goals`, `habits`, `meals`, `grocery_items`, `custom_reminders`, `activity_log`) carries `user_id`.
+- Queries enforce ownership: list/get/update/delete all filter on `user_id`; verified by security suite 404s and code review.
+
+**BACKEND — PASS**
+- Server starts: live smoke test — health 200, DB connected, clean SIGTERM shutdown.
+- APIs work: 473 API-suite assertions across all 10 route modules.
+- Errors handled: 401/404/409/429 mapped; PG error codes → 400/409; malformed JSON → **400** and oversized bodies → **413** (fixed this phase — body-parser errors previously fell through to 500); dev-only stack traces.
+- Environment configuration works: `.env`/`.env.example`; production guard refuses to start without `DATABASE_URL` + `CORS_ORIGINS`.
+
+**FRONTEND — PASS**
+- Login/logout, tasks, notes, calendar, dashboard, analytics, profile — all exercised through the real UI (complete suite, 78 asserts).
+- Search/filter — UI-driven task search + status/type filters + clear-filters, and notes search (added this phase); server-side search/filter/sort covered by API suites.
+- Responsive UI — CSS breakpoints verified + mobile off-canvas sidebar open/navigate/backdrop-close.
+
+**DATA — PASS**
+- No fake production users/tasks/notes/events/analytics: DB left at 0 rows/0 users after all suites; no seed/demo data anywhere in `server/` or `src/`; complete suite asserts sample titles never appear.
+
+### What was fixed this phase
+- **`server/middleware/errorHandler.js`** — body-parser/HTTP client errors (e.g., `entity.parse.failed`, `payload.too.large`) now map to their real 4xx status instead of 500. Malformed JSON → 400, oversized body → 413. Covered by two new auth-suite assertions.
+- **`tests/complete.test.mjs`** — added UI search/filter coverage (task search, type filter, clear filters, notes search) + fixture cleanup; now 78 assertions.
+- **`README.md`** — updated the stale "localStorage, no account" copy and reorganized a concise Getting Started: Installation, Environment setup, Database setup, Migration commands, Backend start, Frontend start, Authentication overview; added `test:security`/`test:complete` to the test list. No source code dumped.
+
+### Tests run (Phase 12 — final)
+1. **API suites**: db (47), auth (33), profile (26), tasks (54), notes (45), calendar (51), stats (82), collections (83), security (52) — ALL PASSED (473 assertions).
+2. **`node tests/complete.test.mjs`** — ALL COMPLETE APPLICATION TESTS PASSED (78 assertions).
+3. **`npm test`** — ALL FUNCTIONAL TESTS PASSED. **`npm run lint`** — clean (0 warnings). **`npm run build`** — succeeds. **`npm run db:migrate`** — up to date.
+4. **Live smoke**: server boot + health + register + `/me` + 401/404/400/413 paths verified over HTTP.
+5. Cleanup verified: DB has 0 users and 0 data rows after all runs.

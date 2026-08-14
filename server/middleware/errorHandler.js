@@ -18,9 +18,13 @@ const PG_ERROR_STATUS = {
 
 export function errorHandler(err, req, res, _next) {
   const mapped = PG_ERROR_STATUS[err.code];
-  const statusCode = err instanceof AppError ? err.statusCode : mapped ?? 500;
+  const clientStatus = err.status ?? err.statusCode;
+  const parsed =
+    mapped ??
+    (Number.isInteger(clientStatus) && clientStatus >= 400 && clientStatus < 500 ? clientStatus : null);
+  const statusCode = err instanceof AppError ? err.statusCode : parsed ?? 500;
   const message =
-    err instanceof AppError ? err.message : mapped ? `Invalid request: ${err.message}` : "Internal Server Error";
+    err instanceof AppError ? err.message : parsed ? `Invalid request: ${err.message}` : "Internal Server Error";
 
   if (statusCode >= 500) {
     console.error(err);

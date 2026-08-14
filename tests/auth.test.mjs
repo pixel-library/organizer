@@ -146,6 +146,22 @@ async function main() {
   const garbageCookie = await get("/me", "life_organizer_sid=not-a-real-token");
   assert("protected endpoint with garbage cookie → 401", garbageCookie.status === 401, String(garbageCookie.status));
 
+  // 7. Error handling: malformed JSON and oversized bodies
+  const badJson = await fetch(`${base}/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{bad json"
+  });
+  assert("malformed JSON body → 400 (not 500)", badJson.status === 400, String(badJson.status));
+  const badJsonBody = await badJson.json();
+  assert("malformed JSON error body shape", badJsonBody.error?.message && badJsonBody.error.message.length > 0);
+  const oversized = await fetch(`${base}/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "x", email: emailA, password: "y".repeat(2 * 1024 * 1024) })
+  });
+  assert("oversized JSON body → 413", oversized.status === 413, String(oversized.status));
+
   // Cleanup
   await getPool().query("DELETE FROM users WHERE email LIKE $1", ["auth-%@test.dev"]);
   const leftover = await getPool().query("SELECT count(*)::int AS n FROM sessions");
