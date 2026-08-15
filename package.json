@@ -24,7 +24,16 @@
     "test:stats": "node tests/stats.test.mjs",
     "test:collections": "node tests/collections.test.mjs",
     "test:security": "node tests/security.test.mjs",
-    "test:complete": "node tests/complete.test.mjs"
+    "test:complete": "node tests/complete.test.mjs",
+    "test:admin": "node tests/admin.test.mjs",
+    "test:admin:browse": "node tests/admin-browse.test.mjs",
+    "test:admin:sql": "node tests/admin-sql.test.mjs",
+    "test:admin:backup": "node tests/admin-backup.test.mjs",
+    "admin": "node scripts/admin.js",
+    "admin:init": "node scripts/admin-init.js",
+    "admin:sql": "node scripts/admin.js --sql",
+    "admin:export": "node scripts/admin-export.js",
+    "admin:view": "node scripts/admin-view.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

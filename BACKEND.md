@@ -488,6 +488,10 @@ npm run test:stats       # dashboard + analytics aggregates
 npm run test:collections # goals/habits/meals/grocery/reminders/activity/migrate
 npm run test:security    # authz/isolation/rate-limit/headers
 npm run test:complete    # full end-to-end (jsdom + real UI + API)
+npm run test:admin       # admin console: auth + dynamic table list
+npm run test:admin:browse # admin console: browse/search/filter/sort/breakdown
+npm run test:admin:sql   # admin console: read-only SQL mode
+npm run test:admin:backup # admin console: encrypted backup export/view
 ```
 
 Notes:
@@ -499,7 +503,22 @@ Notes:
 
 ---
 
-## 18. Security notes
+## 18. Admin console & CLI tools
+
+A terminal-only admin console (`scripts/`) for inspecting the database directly — never part of the web app or the deployed site.
+
+- **`scripts/admin-utils.js`** — shared helpers: hidden prompt queue (TTY + piped stdin), credential storage (`~/.config/life-organizer/admin.json`, mode `600`), `authenticate()`, DB connect + read-only enforcement, dynamic table/column introspection, `runBrowseQuery()` (whitelisted identifiers + 100% parameterized), `renderTable()`.
+- **`scripts/admin-init.js`** — `npm run admin:init`: create the bcrypt-hashed (cost 12) admin username/password. Refuses to overwrite an existing account.
+- **`scripts/admin.js`** — `npm run admin`: login → table list → per-table browser (paging/search/filter/sort/detail) → per-user breakdown → read-only SQL REPL. JSON modes (`--json`) for automation. The session runs with `SET default_transaction_read_only = on` unless `--allow-write`.
+- **`scripts/admin-backup.js`** — `AES-256-GCM` backup format: gzip(JSON) encrypted with a scrypt-derived key; salt + IV + auth tag stored in the envelope; any wrong passphrase or tamper is rejected by the tag.
+- **`scripts/admin-export.js`** — `npm run admin:export`: dumps all tables to an encrypted `.lzb` file.
+- **`scripts/admin-view.js`** — `npm run admin:view <file>`: summary, `--table <name>`, `--json`.
+
+Passphrases are prompted hidden, or via `--pass` / `ADMIN_BACKUP_PASS`. Credentials always require the admin login.
+
+---
+
+## 19. Security notes
 
 - **SQL injection**: 100% parameterized queries (`$n` placeholders); dynamic `ORDER BY`/column names come from internal whitelists, never user input.
 - **Passwords**: bcryptjs, cost 10, never returned by any endpoint (`safeUser` strips `password_hash`).
@@ -509,4 +528,4 @@ Notes:
 - **Headers**: helmet defaults; `x-powered-by` disabled; CORS strictly allow-listed with credentials.
 - **Secrets**: never commit `.env`; in prod, secrets come from Netlify env vars (never in the repo or bundle).
 - **Body size**: 1 MB JSON cap.
-```
+- **Admin console**: local-only CLI, never in the web app; credentials bcrypt-hashed (cost 12) in a mode-600 file; sessions run in a PostgreSQL read-only transaction by default; backups are AES-256-GCM encrypted with a scrypt-derived key.

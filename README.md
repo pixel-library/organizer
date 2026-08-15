@@ -186,6 +186,43 @@ Notes:
 - **GET /api/stats** computes live dashboard + analytics metrics from real user data only — a new account gets an empty state (`dashboard.isEmpty: true`), never fabricated figures.
 - **POST /api/migrate** imports legacy `localStorage` data in one transaction, mapping old field names to the database schema, and clears the local keys afterwards.
 
+## Admin Console
+
+A terminal-only admin console for inspecting the database directly. It is **never** part of the web app or the deployed site — you run it locally, and it speaks straight to PostgreSQL (your `DATABASE_URL`, or the local dev DB).
+
+```bash
+npm run admin:init     # one-time: create your admin username + password (stored bcrypt-hashed)
+npm run admin          # open the console
+```
+
+The admin credentials are kept at `~/.config/life-organizer/admin.json` (file mode `600`, bcrypt-hashed, never in the repo or on the web). On every launch the console asks for your admin username + password, and the whole session runs inside a **read-only transaction** unless you pass `--allow-write`.
+
+From the console menu you can:
+
+- Browse any table with **paging, search, filters, sorting, and full-row detail** — `s groceries`, `f priority=Red`, `o created_at desc`, `d 3`, `x` to clear
+- Open a **per-user breakdown** (`b`) — every user's row counts across all data tables
+- Drop into a **read-only SQL REPL** (`s` or `npm run admin:sql`) — writes are blocked by PostgreSQL itself
+
+For automation, the same features run as JSON commands:
+
+```bash
+npm run admin -- --json --table tasks --search groceries
+npm run admin -- --json --table tasks --filter priority=Red --sort created_at --sort-dir desc
+npm run admin -- --json --breakdown
+npm run admin -- --json --sql-query "SELECT name, email FROM users"
+```
+
+**Encrypted backups** (`AES-256-GCM`, key derived via scrypt from your passphrase; the backup is gzipped and the file contains no plaintext):
+
+```bash
+npm run admin:export            # dump all tables → backup-<timestamp>.lzb
+npm run admin:view backup.lzb   # summary of tables + row counts
+npm run admin:view backup.lzb -- --table users        # see a table's rows
+npm run admin:view backup.lzb -- --json               # full dump
+```
+
+The passphrase is prompted hidden, or supplied via `--pass` / the `ADMIN_BACKUP_PASS` env var (for automation). Wrong passphrase or a tampered file is rejected by the AES-GCM authentication tag.
+
 ## Testing
 
 ```bash
@@ -201,6 +238,10 @@ npm run test:stats      # dashboard/analytics stats suite
 npm run test:collections # goals/habits/meals/grocery/reminders/activity-log/migrate suite
 npm run test:security   # auth isolation + security suite
 npm run test:complete   # full end-to-end UI suite (real backend)
+npm run test:admin      # admin console: auth + dynamic table list
+npm run test:admin:browse # admin console: browse/search/filter/sort/breakdown
+npm run test:admin:sql  # admin console: read-only SQL mode
+npm run test:admin:backup # admin console: encrypted backup export/view
 ```
 
 The API suites need a running database (`npm run db:start` + `npm run db:migrate`). The schema is created without any seed data — all tables start empty.
@@ -288,6 +329,7 @@ life-organizer/
 │   ├── main.jsx             # App entry point
 │   └── index.css            # Global styles + theme system
 ├── tests/                   # Test suites (see Testing)
+├── scripts/                 # Admin console CLI (admin, admin:init, admin:export, admin:view)
 ├── server/
 │   ├── index.js             # Server entry point + graceful shutdown
 │   ├── app.js               # Express app assembly (middleware, routes, errors)
