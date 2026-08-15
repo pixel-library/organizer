@@ -18,10 +18,12 @@ const FIELDS = [
   ["estimatedTime", "estimated_time", "text"],
   ["tags", "tags", "array"],
   ["subtasks", "subtasks", "jsonb"],
-  ["recurring", "recurring", "text"]
+  ["recurring", "recurring", "text"],
+  ["color", "color", "text"]
 ];
 
 const PRIORITIES = ["Red", "Yellow", "Green"];
+const TASK_COLORS = ["#313575", "#321951", "#633090", "#B22E37", "#F68318", "#FDC005"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{1,2}:\d{2}$/;
 
@@ -45,6 +47,7 @@ const serialize = (row) => ({
   tags: row.tags ?? [],
   subtasks: row.subtasks ?? [],
   recurring: row.recurring,
+  color: row.color || "",
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at)
 });
@@ -88,6 +91,14 @@ const normalizeField = (api, value) => {
       return normalizeDate(value);
     case "time":
       return normalizeTime(value);
+    case "color": {
+      if (value === "" || value === null || value === undefined) return null;
+      const v = String(value).trim().toUpperCase();
+      if (!TASK_COLORS.includes(v)) {
+        throw new AppError("color must be one of: " + TASK_COLORS.join(", "), 400);
+      }
+      return v;
+    }
     case "completed":
       return Boolean(value);
     case "tags": {

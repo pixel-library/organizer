@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { todayKey } from "../hooks/useLifePlanner";
+import { TASK_COLORS, contrastText } from "../utils/color";
 
 export default function TaskModal({ editingTask, onSave, onClose }) {
   const [title, setTitle] = useState("");
@@ -13,6 +14,7 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
   const [estimatedTime, setEstimatedTime] = useState("");
   const [tags, setTags] = useState("");
   const [recurring, setRecurring] = useState("none");
+  const [color, setColor] = useState(TASK_COLORS[0].value);
   const titleRef = useRef(null);
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
       setEstimatedTime(editingTask.estimatedTime || "");
       setTags(Array.isArray(editingTask.tags) ? editingTask.tags.join(", ") : (editingTask.tags || ""));
       setRecurring(editingTask.recurring || "none");
+      setColor(TASK_COLORS.some(c => c.value === (editingTask.color || "")) ? editingTask.color : TASK_COLORS[0].value);
     } else {
       setTitle("");
       setDate(todayKey());
@@ -40,6 +43,7 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
       setEstimatedTime("");
       setTags("");
       setRecurring("none");
+      setColor(TASK_COLORS[0].value);
     }
     setTimeout(() => titleRef.current?.focus(), 50);
   }, [editingTask]);
@@ -61,6 +65,7 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
       estimatedTime,
       tags: tags.split(",").map(t => t.trim()).filter(Boolean),
       recurring,
+      color,
       editingId: editingTask?.id || null
     });
   };
@@ -128,6 +133,25 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
             </div>
           </div>
           <div className="modal-field">
+            <label>Task Color</label>
+            <div className="task-color-row">
+              {TASK_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  title={`${c.label} (${c.value})`}
+                  aria-label={`Select color ${c.label}`}
+                  aria-pressed={color === c.value}
+                  className={"task-color-swatch" + (color === c.value ? " task-color-swatch--active" : "")}
+                  style={{ background: c.value }}
+                  onClick={() => setColor(c.value)}
+                >
+                  {color === c.value && <i className="fa-solid fa-check" style={{ color: contrastText(c.value) }}></i>}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="modal-field">
             <label>Reminder</label>
             <select value={reminder} onChange={(e) => setReminder(e.target.value)}>
               <option value="exact">Exact at scheduled time</option>
@@ -152,7 +176,7 @@ export default function TaskModal({ editingTask, onSave, onClose }) {
           </div>
           <div className="modal-field">
             <label>Description</label>
-            <textarea placeholder="Describe this task..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} style={{ width: "100%", background: "#1c1c1c", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, color: "#ddd", padding: "10px 12px", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
+            <textarea placeholder="Describe this task..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} style={{ width: "100%", background: "#ffffff", border: "1px solid rgba(57,63,75,.14)", borderRadius: 8, color: "#393F4B", padding: "10px 12px", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
           </div>
         </div>
         <div className="modal-footer">

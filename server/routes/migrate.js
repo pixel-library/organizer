@@ -40,12 +40,18 @@ const cleanWeekdays = (v) => {
 const cleanSubtasks = (v) => (Array.isArray(v) ? JSON.stringify(v) : JSON.stringify([]));
 
 const PRIORITIES = ["Red", "Yellow", "Green"];
+const TASK_COLORS = ["#313575", "#321951", "#633090", "#B22E37", "#F68318", "#FDC005"];
+const cleanColor = (v) => {
+  if (v === undefined || v === null || v === "") return null;
+  const s = String(v).trim().toUpperCase();
+  return TASK_COLORS.includes(s) ? s : null;
+};
 
 const insertTasks = async (client, userId, rows) => {
   for (const t of rows ?? []) {
     await client.query(
-      `INSERT INTO tasks (user_id, name, date, time, priority, reminder, completed, type, description, start_date, estimated_time, tags, subtasks, recurring)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      `INSERT INTO tasks (user_id, name, date, time, priority, reminder, completed, type, description, start_date, estimated_time, tags, subtasks, recurring, color)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
       [
         userId,
         cleanText(t.name, 200) || "Untitled task",
@@ -60,7 +66,8 @@ const insertTasks = async (client, userId, rows) => {
         cleanText(t.estimated_time, 100),
         cleanTags(t.tags),
         cleanSubtasks(t.subtasks),
-        cleanText(t.recurring, 100)
+        cleanText(t.recurring, 100),
+        cleanColor(t.color)
       ]
     );
   }

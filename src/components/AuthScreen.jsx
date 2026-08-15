@@ -43,9 +43,9 @@ export default function AuthScreen({ onLogin, onRegister, error = "" }) {
     padding: "10px 12px",
     fontSize: 14,
     borderRadius: 8,
-    border: "1px solid rgba(255,255,255,.1)",
-    background: "rgba(255,255,255,.05)",
-    color: "var(--text, #eee)",
+    border: "1px solid rgba(57,63,75,.14)",
+    background: "#FFFFFF",
+    color: "var(--text, #393F4B)",
     outline: "none"
   };
 
@@ -94,7 +94,7 @@ export default function AuthScreen({ onLogin, onRegister, error = "" }) {
             style={inputStyle}
           />
           {(localError || error) && (
-            <p className="analytics-empty-state" style={{ color: "#e07b7b", marginBottom: 12, padding: 0, textAlign: "left" }}>
+            <p className="analytics-empty-state" style={{ color: "#b91c1c", marginBottom: 12, padding: 0, textAlign: "left" }}>
               {localError || error}
             </p>
           )}

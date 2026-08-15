@@ -43,9 +43,9 @@ export default function Meals({ meals, groceryList, onEditMeal, onDeleteMeal, on
   };
 
   const statusChip = (status) => {
-    if (status === "completed") return { label: "Completed", color: "#22c55e" };
-    if (status === "skipped") return { label: "Skipped", color: "#8d8d8d" };
-    return { label: "Planned", color: "#5aa7ff" };
+    if (status === "completed") return { label: "Completed", color: "#16a34a" };
+    if (status === "skipped") return { label: "Skipped", color: "#6B7486" };
+    return { label: "Planned", color: "#910029" };
   };
 
   return (
@@ -126,22 +126,22 @@ export default function Meals({ meals, groceryList, onEditMeal, onDeleteMeal, on
                 const dateKey = formatDateKey(d);
                 return (
                   <tr key={dateKey}>
-                    <td style={{ fontWeight: 700, color: "#fff", whiteSpace: "nowrap", verticalAlign: "top" }}>
+                    <td style={{ fontWeight: 700, color: "#393F4B", whiteSpace: "nowrap", verticalAlign: "top" }}>
                       <div>{dayName}</div>
-                      <div style={{ fontSize: 12, color: "#666", fontWeight: 400 }}>{dateKey}</div>
+                      <div style={{ fontSize: 12, color: "#7A8494", fontWeight: 400 }}>{dateKey}</div>
                     </td>
                     {MEAL_TYPES.map(type => {
                       const meal = getMealForType(dateKey, dayName, type);
                       return (
                         <td key={type} style={{ verticalAlign: "top" }}>
                           {meal ? (
-                            <div style={{ padding: 8, background: "#202020", border: "1px solid rgba(255,255,255,.06)", borderRadius: 6 }}>
+                            <div style={{ padding: 8, background: "#F2F7FA", border: "1px solid rgba(57,63,75,.08)", borderRadius: 6 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3, gap: 6 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: "#ddd" }}>{escapeHtml(meal.name || type)}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: "#393F4B" }}>{escapeHtml(meal.name || type)}</div>
                                 <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 7px", borderRadius: 4, background: statusChip(meal.status).color + "22", color: statusChip(meal.status).color }}>{statusChip(meal.status).label}</span>
                               </div>
-                              <div style={{ fontSize: 12, color: "#7a7a7a", marginBottom: 2 }}>{escapeHtml(meal.time || "")}</div>
-                              {meal.calories ? <div style={{ fontSize: 12, color: "#9a9a9a" }}>{meal.calories} kcal</div> : <div style={{ fontSize: 12, color: "#666" }}>Nutrition: Not tracked</div>}
+                              <div style={{ fontSize: 12, color: "#7A8494", marginBottom: 2 }}>{escapeHtml(meal.time || "")}</div>
+                              {meal.calories ? <div style={{ fontSize: 12, color: "#6B7486" }}>{meal.calories} kcal</div> : <div style={{ fontSize: 12, color: "#8A94A5" }}>Nutrition: Not tracked</div>}
                               <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
                                 <button onClick={() => onEditMeal(meal.id)} className="task-tool-btn" style={{ height: 36, fontSize: 12 }} title="Edit"><i className="fa-solid fa-pen"></i></button>
                                 <button onClick={() => onSetMealStatus(meal.id, meal.status === "completed" ? "planned" : "completed")} className="task-tool-btn" style={{ height: 36, fontSize: 12 }} title="Toggle complete"><i className="fa-solid fa-check"></i></button>

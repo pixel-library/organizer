@@ -392,12 +392,12 @@ export default function Dashboard({
           <div className="dashboard-task-list">
             {recentNotes.map(note => (
               <div key={note.id} className="dash-task-row" onClick={() => onSwitchView("notes")}>
-                <span className="priority-dot" style={{ background: note.pinned ? "#f59e0b" : "#666" }}></span>
+                <span className="priority-dot" style={{ background: note.pinned ? "#910029" : "#8A94A5" }}></span>
                 <span style={{ flex: 1 }}>
                   <b>{escapeHtml(note.title)}</b>
                   <small>{escapeHtml(note.category)}{note.pinned ? " · Pinned" : ""} · {new Date(note.updatedAt).toLocaleDateString()}</small>
                 </span>
-                <i className="fa-solid fa-chevron-right" style={{ color: "#555", fontSize: 14 }}></i>
+                <i className="fa-solid fa-chevron-right" style={{ color: "#8A94A5", fontSize: 14 }}></i>
               </div>
             ))}
           </div>

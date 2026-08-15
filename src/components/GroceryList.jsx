@@ -92,14 +92,14 @@ export default function GroceryList({ groceryList, meals, onAdd, onUpdate, onDel
   const completedCount = groceryList.filter(i => i.completed).length;
 
   return (
-    <div style={{ background: "#252525", border: "1px solid rgba(255,255,255,.06)", borderRadius: 8, padding: 15 }}>
+    <div style={{ background: "#FFFFFF", border: "1px solid rgba(57,63,75,.08)", borderRadius: 8, padding: 15 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
         <div>
-          <span style={{ fontSize: 13, fontWeight: 800, color: "#ddd", textTransform: "uppercase", letterSpacing: ".08em" }}>
-            <i className="fa-solid fa-cart-shopping" style={{ marginRight: 6, color: "#f59e0b" }}></i>
+          <span style={{ fontSize: 13, fontWeight: 800, color: "#393F4B", textTransform: "uppercase", letterSpacing: ".08em" }}>
+            <i className="fa-solid fa-cart-shopping" style={{ marginRight: 6, color: "#910029" }}></i>
             Grocery List
           </span>
-          <span style={{ fontSize: 12, color: "#666", marginLeft: 8 }}>{completedCount}/{groceryList.length} purchased</span>
+          <span style={{ fontSize: 12, color: "#7A8494", marginLeft: 8 }}>{completedCount}/{groceryList.length} purchased</span>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={generateFromMeals} className="task-tool-btn" style={{ height: 38, fontSize: 12 }}>
@@ -132,9 +132,9 @@ export default function GroceryList({ groceryList, meals, onAdd, onUpdate, onDel
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-          style={{ flex: "1 1 180px", height: 40, padding: "0 12px", background: "#1c1c1c", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, color: "#ddd", fontSize: 14, fontFamily: "inherit" }}
+          style={{ flex: "1 1 180px", height: 40, padding: "0 12px", background: "#FFFFFF", border: "1px solid rgba(57,63,75,.14)", borderRadius: 8, color: "#393F4B", fontSize: 14, fontFamily: "inherit" }}
         />
-        <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} style={{ height: 40, background: "#1c1c1c", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, color: "#aaa", fontSize: 13, padding: "0 8px" }}>
+        <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} style={{ height: 40, background: "#FFFFFF", border: "1px solid rgba(57,63,75,.14)", borderRadius: 8, color: "#5D6E7F", fontSize: 13, padding: "0 8px" }}>
           {GROCERY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <button onClick={handleAdd} className="small-primary" style={{ height: 40 }}>
@@ -152,24 +152,24 @@ export default function GroceryList({ groceryList, meals, onAdd, onUpdate, onDel
 
       {Object.entries(grouped).map(([category, categoryItems]) => (
         <div key={category} style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: "#999", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#6B7486", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
             {category}
           </div>
           {categoryItems.map(item => (
-            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,.03)" }}>
+            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(57,63,75,.05)" }}>
               <input
                 type="checkbox"
                 checked={item.completed}
                 onChange={() => onToggle(item.id)}
-                style={{ accentColor: "#c0c0c0" }}
+                style={{ accentColor: "#910029" }}
               />
-              <span style={{ flex: 1, fontSize: 13, color: item.completed ? "#666" : "#aaa", textDecoration: item.completed ? "line-through" : "none" }}>
+              <span style={{ flex: 1, fontSize: 13, color: item.completed ? "#7A8494" : "#393F4B", textDecoration: item.completed ? "line-through" : "none" }}>
                 {escapeHtml(item.name)}
               </span>
               {item.quantity ? (
-                <span style={{ fontSize: 12, color: "#666" }}>{escapeHtml(item.quantity)}{item.unit ? " " + escapeHtml(item.unit) : ""}</span>
+                <span style={{ fontSize: 12, color: "#7A8494" }}>{escapeHtml(item.quantity)}{item.unit ? " " + escapeHtml(item.unit) : ""}</span>
               ) : (
-                <span style={{ fontSize: 12, color: "#444" }}>—</span>
+                <span style={{ fontSize: 12, color: "#8A94A5" }}>—</span>
               )}
               <button onClick={() => editItem(item)} className="task-action-btn" title="Edit quantity">
                 <i className="fa-solid fa-pen" style={{ fontSize: 12 }}></i>

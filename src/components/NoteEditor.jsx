@@ -67,7 +67,7 @@ export default function NoteEditor({ note, onSave, onClose }) {
           </div>
           <div className="modal-field">
             <label>Content</label>
-            <textarea placeholder="Write your note..." value={content} onChange={(e) => setContent(e.target.value)} rows={6} style={{ width: "100%", background: "#1c1c1c", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, color: "#ddd", padding: "10px 12px", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
+            <textarea placeholder="Write your note..." value={content} onChange={(e) => setContent(e.target.value)} rows={6} style={{ width: "100%", background: "#FFFFFF", border: "1px solid rgba(57,63,75,.14)", borderRadius: 8, color: "#393F4B", padding: "10px 12px", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
           </div>
           <div className="modal-field">
             <label>

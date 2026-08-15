@@ -199,7 +199,7 @@ export default function EventEditor({ event, preset, occurrenceDate, onSave, onC
           </div>
           <div className="modal-field">
             <label>Description</label>
-            <textarea placeholder="Add description..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} style={{ width: "100%", background: "#1c1c1c", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, color: "#ddd", padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }} />
+            <textarea placeholder="Add description..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} style={{ width: "100%", background: "#FFFFFF", border: "1px solid rgba(57,63,75,.14)", borderRadius: 8, color: "#393F4B", padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }} />
           </div>
           <div className="modal-field">
             <label>Reminder</label>
@@ -219,9 +219,9 @@ export default function EventEditor({ event, preset, occurrenceDate, onSave, onC
               <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                 {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(day => (
                   <button key={day} type="button" onClick={() => toggleWeekday(day)} style={{
-                    width: 36, height: 36, borderRadius: 6, border: "1px solid rgba(255,255,255,.08)",
-                    background: customWeekdays.includes(day) ? "#c0c0c0" : "#202020",
-                    color: customWeekdays.includes(day) ? "#111" : "#aaa",
+                    width: 36, height: 36, borderRadius: 6, border: "1px solid rgba(57,63,75,.14)",
+                    background: customWeekdays.includes(day) ? "#910029" : "#FFFFFF",
+                    color: customWeekdays.includes(day) ? "#fff" : "#5D6E7F",
                     fontSize: 13, fontWeight: 700, cursor: "pointer"
                   }}>{day}</button>
                 ))}

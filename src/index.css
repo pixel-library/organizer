@@ -1,30 +1,40 @@
 /* =========================================================
    LIFE PLANNER OS
-   COMPLETE DARK PROFESSIONAL UI
+   BRAND THEME: ALICE BLUE + CHARCOAL + BURGUNDY
+   ---------------------------------------------------------
+   Alice Blue  #ECF4F7  — page background / airy surfaces
+   Charcoal    #393F4B  — primary text / strong surfaces
+   Burgundy    #910029  — primary actions / brand accents
+   (Semantic status colors red/yellow/green are reserved for
+    priority + completion data and task/event colors.)
 ========================================================= */
 
 :root {
-    --matt: #151515;
-    --jet: #202020;
-    --surface: #292929;
-    --surface-2: #303030;
-    --surface-3: #353535;
+    --matt: #ECF4F7;
+    --jet: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F2F7FA;
+    --surface-3: #E7EFF4;
 
-    --border: rgba(255,255,255,.08);
-    --border-strong: rgba(255,255,255,.13);
+    --border: rgba(57,63,75,.10);
+    --border-strong: rgba(57,63,75,.18);
 
-    --text: #f1f1f1;
-    --silver: #c0c0c0;
-    --muted: #888;
-    --muted-2: #666;
+    --text: #393F4B;
+    --silver: #4A5263;
+    --muted: #7A8494;
+    --muted-2: #9AA5B4;
 
-    --green: #22c55e;
-    --yellow: #eab308;
-    --red: #ef4444;
+    --green: #1a9e55;
+    --yellow: #b58a00;
+    --red: #c2333c;
 
-    --blue: #5aa7ff;
-    --purple: #8b7cff;
-    --orange: #f59e0b;
+    --blue: #910029;
+    --purple: #4A5263;
+    --orange: #910029;
+
+    --color-alice-blue: #ECF4F7;
+    --color-charcoal: #393F4B;
+    --color-burgundy: #910029;
 
     --radius: 12px;
 
@@ -103,7 +113,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 ::selection {
-    background: rgba(90,167,255,.3);
+    background: rgba(145, 0, 41,.3);
 }
 
 ::-webkit-scrollbar {
@@ -112,16 +122,16 @@ textarea:focus:not(:focus-visible) {
 }
 
 ::-webkit-scrollbar-track {
-    background: #151515;
+    background: #ECF4F7;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #5d5d5d;
+    background: #CBD5DD;
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #8d8d8d;
+    background: #AEB9C4;
 }
 
 .hidden {
@@ -146,8 +156,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background: #252529;
-    border-right: 1px solid rgba(255,255,255,.07);
+    background: #FFFFFF;
+    border-right: 1px solid rgba(57, 63, 75,.07);
     z-index: 50;
 }
 
@@ -157,20 +167,20 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 11px;
-    border-bottom: 1px solid rgba(255,255,255,.07);
+    border-bottom: 1px solid rgba(57, 63, 75,.07);
 }
 
 .brand-dot {
     width: 11px;
     height: 11px;
     border-radius: 50%;
-    background: #c0c0c0;
-    box-shadow: 0 0 12px rgba(192,192,192,.5);
+    background: #910029;
+    box-shadow: 0 0 12px rgba(145, 0, 41,.5);
 }
 
 .sidebar-brand strong {
     display: block;
-    color: #fff;
+    color: #393F4B;
     font-size: 15px;
     font-weight: 800;
     letter-spacing: -.02em;
@@ -179,7 +189,7 @@ textarea:focus:not(:focus-visible) {
 .sidebar-brand small {
     display: block;
     margin-top: 2px;
-    color: #777;
+    color: #7A8494;
     font-size: 10px;
     letter-spacing: .15em;
 }
@@ -190,7 +200,7 @@ textarea:focus:not(:focus-visible) {
 
 .nav-label {
     margin: 0 12px 10px;
-    color: #666;
+    color: #8A94A5;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: .13em;
@@ -203,7 +213,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #96969b;
+    color: #6B7486;
     text-decoration: none;
     border-radius: 8px;
     font-size: 14px;
@@ -213,27 +223,27 @@ textarea:focus:not(:focus-visible) {
 
 .nav-item i {
     width: 20px;
-    color: #85858a;
+    color: #6B7486;
     font-size: 17px;
 }
 
 .nav-item:hover {
-    color: #fff;
-    background: #1c1c1f;
+    color: #393F4B;
+    background: #EAF2F7;
 }
 
 .nav-item:hover i {
-    color: #fff;
+    color: #393F4B;
 }
 
 .nav-item.active {
-    color: #fff;
-    background: #17171a;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+    color: #393F4B;
+    background: #EAF2F7;
+    box-shadow: inset 0 0 0 1px rgba(57, 63, 75,.06);
 }
 
 .nav-item.active i {
-    color: #f0a51d;
+    color: #910029;
 }
 
 .nav-count {
@@ -245,14 +255,14 @@ textarea:focus:not(:focus-visible) {
     align-items: center;
     justify-content: center;
     color: #bbb;
-    background: #343438;
+    background: #EAF2F7;
     border-radius: 5px;
     font-size: 11px;
 }
 
 .sidebar-bottom {
     padding: 15px;
-    border-top: 1px solid rgba(255,255,255,.07);
+    border-top: 1px solid rgba(57, 63, 75,.07);
 }
 
 .reminder-status {
@@ -260,8 +270,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     gap: 9px;
     align-items: center;
-    background: #1c1c1f;
-    border: 1px solid rgba(255,255,255,.06);
+    background: #EAF2F7;
+    border: 1px solid rgba(57, 63, 75,.06);
     border-radius: 8px;
 }
 
@@ -271,14 +281,14 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #29292d;
+    background: #F4F9FB;
     border-radius: 8px;
-    color: #aaa;
+    color: #5D6E7F;
 }
 
 .reminder-status span {
     display: block;
-    color: #666;
+    color: #8A94A5;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: .1em;
@@ -287,7 +297,7 @@ textarea:focus:not(:focus-visible) {
 .reminder-status strong {
     display: block;
     margin-top: 3px;
-    color: #65d18c;
+    color: #15803d;
     font-size: 13px;
 }
 
@@ -302,12 +312,12 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 9px;
-    color: #aaa;
+    color: #5D6E7F;
     border-radius: 8px;
 }
 
 .sidebar-profile:hover {
-    background: #1c1c1f;
+    background: #EAF2F7;
 }
 
 .profile-avatar {
@@ -316,8 +326,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border-radius: 8px;
     font-size: 12px;
     font-weight: 800;
@@ -325,20 +335,20 @@ textarea:focus:not(:focus-visible) {
 
 .sidebar-profile strong {
     display: block;
-    color: #ddd;
+    color: #4A5263;
     font-size: 13px;
 }
 
 .sidebar-profile span {
     display: block;
-    color: #666;
+    color: #8A94A5;
     margin-top: 2px;
     font-size: 11px;
 }
 
 .sidebar-profile > i {
     margin-left: auto;
-    color: #666;
+    color: #8A94A5;
     font-size: 15px;
 }
 
@@ -364,13 +374,13 @@ textarea:focus:not(:focus-visible) {
     position: sticky;
     top: 0;
     z-index: 40;
-    background: rgba(24,24,24,.94);
-    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(236, 244, 247,.94);
+    border-bottom: 1px solid rgba(57, 63, 75,.06);
     backdrop-filter: blur(15px);
 }
 
 .header-kicker {
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .16em;
@@ -378,7 +388,7 @@ textarea:focus:not(:focus-visible) {
 
 .top-header h1 {
     margin: 4px 0 0;
-    color: #fff;
+    color: #393F4B;
     font-size: 20px;
     font-weight: 800;
 }
@@ -395,16 +405,16 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #aaa;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.07);
+    color: #5D6E7F;
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.07);
     border-radius: 8px;
     font-size: 13px;
     font-weight: 700;
 }
 
 .live-clock i {
-    color: #777;
+    color: #7A8494;
     font-size: 14px;
 }
 
@@ -416,14 +426,14 @@ textarea:focus:not(:focus-visible) {
     gap: 8px;
     border: 0;
     border-radius: 8px;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     font-size: 14px;
     font-weight: 800;
 }
 
 .header-create:hover {
-    background: #fff;
+    background: #A5002F;
 }
 
 .page-container {
@@ -447,14 +457,14 @@ textarea:focus:not(:focus-visible) {
     justify-content: space-between;
     gap: 25px;
     background:
-        radial-gradient(circle at 85% 15%, rgba(192,192,192,.08), transparent 28%),
-        linear-gradient(135deg,#202020,#303030 55%,#222);
+        radial-gradient(circle at 85% 15%, rgba(145, 0, 41,.08), transparent 28%),
+        linear-gradient(135deg,#FFFFFF,#EAF2F7 55%,#FFFFFF);
     border: 1px solid var(--border);
     border-radius: 14px;
 }
 
 .eyebrow {
-    color: #777;
+    color: #7A8494;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: .16em;
@@ -466,13 +476,13 @@ textarea:focus:not(:focus-visible) {
     display: inline-block;
     margin-right: 6px;
     border-radius: 50%;
-    background: #c0c0c0;
-    box-shadow: 0 0 10px rgba(192,192,192,.6);
+    background: #910029;
+    box-shadow: 0 0 10px rgba(145, 0, 41,.6);
 }
 
 .dashboard-welcome h2 {
     margin: 7px 0 4px;
-    color: #fff;
+    color: #393F4B;
     font-size: clamp(22px,3vw,34px);
     line-height: 1.1;
     letter-spacing: -.04em;
@@ -480,7 +490,7 @@ textarea:focus:not(:focus-visible) {
 
 .dashboard-welcome p {
     margin: 0;
-    color: #858585;
+    color: #6B7486;
     font-size: 14px;
 }
 
@@ -488,12 +498,12 @@ textarea:focus:not(:focus-visible) {
     min-width: 165px;
     padding-left: 22px;
     text-align: right;
-    border-left: 1px solid rgba(255,255,255,.1);
+    border-left: 1px solid rgba(57, 63, 75,.1);
 }
 
 .dashboard-date-block span {
     display: block;
-    color: #8a8a8a;
+    color: #6B7486;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: .08em;
@@ -502,7 +512,7 @@ textarea:focus:not(:focus-visible) {
 .dashboard-date-block strong {
     display: block;
     margin-top: 5px;
-    color: #fff;
+    color: #393F4B;
     font-size: 26px;
 }
 
@@ -515,7 +525,7 @@ textarea:focus:not(:focus-visible) {
 
 .dash-stat-card {
     padding: 18px;
-    background: #303030;
+    background: #EDF3F7;
     border: 1px solid var(--border);
     border-radius: 12px;
     transition: border-color .2s ease, transform .2s ease;
@@ -530,7 +540,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #999;
+    color: #6B7486;
     font-size: 13px;
     font-weight: 800;
     text-transform: uppercase;
@@ -538,13 +548,13 @@ textarea:focus:not(:focus-visible) {
 }
 
 .dash-stat-top i {
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 16px;
 }
 
 .dash-stat-value {
     margin-top: 10px;
-    color: #fff;
+    color: #393F4B;
     font-size: 32px;
     font-weight: 800;
     letter-spacing: -.04em;
@@ -555,16 +565,16 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    color: #707070;
+    color: #8A94A5;
     font-size: 12px;
 }
 
 .trend-up {
-    color: #6bd591;
+    color: #15803d;
 }
 
 .trend-alert {
-    color: #ed8989;
+    color: #b91c1c;
 }
 
 .trend-neutral {
@@ -575,7 +585,7 @@ textarea:focus:not(:focus-visible) {
     height: 4px;
     margin-top: 12px;
     overflow: hidden;
-    background: #494949;
+    background: #CBD5DD;
     border-radius: 10px;
 }
 
@@ -583,7 +593,7 @@ textarea:focus:not(:focus-visible) {
     display: block;
     width: 0;
     height: 100%;
-    background: #c0c0c0;
+    background: #910029;
     border-radius: 10px;
     transition: width .3s ease;
 }
@@ -603,7 +613,7 @@ textarea:focus:not(:focus-visible) {
 .dashboard-panel {
     min-width: 0;
     padding: 17px;
-    background: #303030;
+    background: #EDF3F7;
     border: 1px solid var(--border);
     border-radius: 12px;
 }
@@ -619,7 +629,7 @@ textarea:focus:not(:focus-visible) {
 
 .panel-kicker {
     display: block;
-    color: #8a8a8a;
+    color: #6B7486;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .15em;
@@ -627,7 +637,7 @@ textarea:focus:not(:focus-visible) {
 
 .panel-heading h3 {
     margin: 4px 0 0;
-    color: #fff;
+    color: #393F4B;
     font-size: 17px;
     font-weight: 800;
 }
@@ -638,9 +648,9 @@ textarea:focus:not(:focus-visible) {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: #b0b0b0;
+    color: #6B7486;
     background: transparent;
-    border: 1px solid rgba(255,255,255,.12);
+    border: 1px solid rgba(57, 63, 75,.12);
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
@@ -648,8 +658,8 @@ textarea:focus:not(:focus-visible) {
 }
 
 .text-action:hover {
-    color: #fff;
-    border-color: #777;
+    color: #393F4B;
+    border-color: #7A8494;
 }
 
 .icon-action {
@@ -658,21 +668,21 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #aaa;
-    background: #222;
+    color: #5D6E7F;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 8px;
 }
 
 .icon-action:hover {
-    color: #fff;
+    color: #393F4B;
 }
 
 .timeline-toolbar {
     padding: 10px 2px;
     display: flex;
     justify-content: space-between;
-    color: #7a7a7a;
+    color: #7A8494;
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: .06em;
@@ -689,25 +699,25 @@ textarea:focus:not(:focus-visible) {
     grid-template-columns: 52px 17px minmax(0,1fr) auto;
     gap: 8px;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,.045);
+    border-bottom: 1px solid rgba(57, 63, 75,.045);
     border-radius: 7px;
     cursor: pointer;
 }
 
 .timeline-row:hover {
-    background: #252525;
+    background: #FFFFFF;
 }
 
 .timeline-time b {
     display: block;
-    color: #ddd;
+    color: #4A5263;
     font-size: 14px;
 }
 
 .timeline-time span {
     display: block;
     margin-top: 2px;
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
 }
 
@@ -725,7 +735,7 @@ textarea:focus:not(:focus-visible) {
     height: 100%;
     position: absolute;
     top: 18px;
-    background: #555;
+    background: #CBD5DD;
 }
 
 .timeline-dot,
@@ -761,7 +771,7 @@ textarea:focus:not(:focus-visible) {
 .timeline-content b {
     display: block;
     overflow: hidden;
-    color: #eee;
+    color: #393F4B;
     font-size: 14px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -770,18 +780,18 @@ textarea:focus:not(:focus-visible) {
 .timeline-content span {
     display: block;
     margin-top: 2px;
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
 }
 
 .timeline-status {
-    color: #c9a65b;
+    color: #910029;
     font-size: 12px;
     font-style: normal;
 }
 
 .timeline-status.done {
-    color: #65d18c;
+    color: #15803d;
 }
 
 .dashboard-project-list {
@@ -793,7 +803,7 @@ textarea:focus:not(:focus-visible) {
 
 .project-row {
     padding-bottom: 11px;
-    border-bottom: 1px solid rgba(255,255,255,.05);
+    border-bottom: 1px solid rgba(57, 63, 75,.05);
 }
 
 .project-row:last-child {
@@ -804,7 +814,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    color: #eee;
+    color: #393F4B;
     font-size: 13px;
 }
 
@@ -819,18 +829,18 @@ textarea:focus:not(:focus-visible) {
 }
 
 .project-row-top i {
-    color: #777;
+    color: #7A8494;
 }
 
 .project-row-top b {
-    color: #fff;
+    color: #393F4B;
 }
 
 .project-progress {
     height: 5px;
     margin-top: 7px;
     overflow: hidden;
-    background: #4a4a4a;
+    background: #CBD5DD;
     border-radius: 9px;
 }
 
@@ -845,7 +855,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: #7a7a7a;
+    color: #7A8494;
     font-size: 13px;
 }
 
@@ -857,8 +867,8 @@ textarea:focus:not(:focus-visible) {
     height: 28px;
     min-width: 34px;
     padding: 0 10px;
-    color: #aaa;
-    background: #242424;
+    color: #5D6E7F;
+    background: #F6FAFC;
     border: 1px solid var(--border);
     border-radius: 7px;
     font-size: 13px;
@@ -866,8 +876,8 @@ textarea:focus:not(:focus-visible) {
 }
 
 .project-row-meta button:hover {
-    color: #fff;
-    border-color: #777;
+    color: #393F4B;
+    border-color: #7A8494;
 }
 
 .task-tools {
@@ -882,8 +892,8 @@ textarea:focus:not(:focus-visible) {
 .task-tools select {
     height: 38px;
     padding: 0 10px;
-    color: #aaa;
-    background: #202020;
+    color: #5D6E7F;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 13px;
@@ -896,8 +906,8 @@ textarea:focus:not(:focus-visible) {
 .small-primary {
     height: 38px;
     padding: 0 14px;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border: 0;
     border-radius: 8px;
     font-size: 13px;
@@ -905,7 +915,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .small-primary:hover {
-    background: #fff;
+    background: #A5002F;
 }
 
 .dashboard-task-list {
@@ -921,13 +931,13 @@ textarea:focus:not(:focus-visible) {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    border-bottom: 1px solid rgba(255,255,255,.045);
+    border-bottom: 1px solid rgba(57, 63, 75,.045);
     transition: background .15s ease;
 }
 
 .dash-task-row:hover,
 .agenda-item:hover {
-    background: #262626;
+    background: #EAF2F7;
 }
 
 .dash-task-row label,
@@ -947,7 +957,7 @@ textarea:focus:not(:focus-visible) {
 .agenda-item b {
     display: block;
     overflow: hidden;
-    color: #eee;
+    color: #393F4B;
     font-size: 14px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -957,13 +967,13 @@ textarea:focus:not(:focus-visible) {
 .agenda-item small {
     display: block;
     margin-top: 2px;
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
 }
 
 .dash-task-row input,
 .agenda-item input {
-    accent-color: #c0c0c0;
+    accent-color: #910029;
 }
 
 .dash-task-row button,
@@ -973,7 +983,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
+    color: #6B7486;
     background: none;
     border: 0;
     border-radius: 8px;
@@ -982,12 +992,12 @@ textarea:focus:not(:focus-visible) {
 
 .dash-task-row button:hover,
 .agenda-item button:hover {
-    color: #fff;
-    background: #333;
+    color: #393F4B;
+    background: #EDF3F7;
 }
 
 .completed-text {
-    color: #666 !important;
+    color: #8A94A5 !important;
     text-decoration: line-through;
 }
 
@@ -1045,13 +1055,13 @@ textarea:focus:not(:focus-visible) {
 
 .audio-left h4 {
     margin: 3px 0;
-    color: #fff;
+    color: #393F4B;
     font-size: 15px;
 }
 
 .audio-left p {
     margin: 0;
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
 }
 
@@ -1067,7 +1077,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #999;
+    color: #6B7486;
     background: none;
     border: 0;
     border-radius: 50%;
@@ -1076,15 +1086,15 @@ textarea:focus:not(:focus-visible) {
 }
 
 .audio-controls > button:hover {
-    color: #fff;
-    background: rgba(255,255,255,.06);
+    color: #393F4B;
+    background: rgba(57, 63, 75,.06);
 }
 
 .audio-progress {
     width: 180px;
     height: 4px;
     overflow: hidden;
-    background: #4b4b4b;
+    background: #CBD5DD;
     border-radius: 10px;
     cursor: pointer;
 }
@@ -1093,15 +1103,15 @@ textarea:focus:not(:focus-visible) {
     display: block;
     width: 33%;
     height: 100%;
-    background: #c0c0c0;
+    background: #910029;
 }
 
 .play-button {
     width: 38px !important;
     height: 38px !important;
     font-size: 15px !important;
-    color: #111 !important;
-    background: #c0c0c0 !important;
+    color: #fff !important;
+    background: #910029 !important;
     border-radius: 50% !important;
 }
 
@@ -1118,7 +1128,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-eyebrow {
-    color: #6d6d6d;
+    color: #8A94A5;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .16em;
@@ -1126,7 +1136,7 @@ textarea:focus:not(:focus-visible) {
 
 .calendar-page-header h2 {
     margin: 5px 0 4px;
-    color: #fff;
+    color: #393F4B;
     font-size: 30px;
     font-weight: 800;
     letter-spacing: -.04em;
@@ -1134,7 +1144,7 @@ textarea:focus:not(:focus-visible) {
 
 .calendar-page-header p {
     margin: 0;
-    color: #777;
+    color: #7A8494;
     font-size: 14px;
 }
 
@@ -1156,24 +1166,24 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-dark-btn {
-    color: #aaa;
-    background: #252525;
+    color: #5D6E7F;
+    background: #FFFFFF;
     border: 1px solid var(--border);
 }
 
 .calendar-dark-btn:hover {
-    color: #fff;
-    background: #303030;
+    color: #393F4B;
+    background: #EDF3F7;
 }
 
 .calendar-orange-btn {
-    color: #151515;
-    background: #f1a51c;
+    color: #fff;
+    background: #910029;
     border: 0;
 }
 
 .calendar-orange-btn:hover {
-    background: #ffb52b;
+    background: #A5002F;
 }
 
 .calendar-search-bar {
@@ -1183,9 +1193,9 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #666;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.06);
+    color: #8A94A5;
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.06);
     border-radius: 10px;
 }
 
@@ -1197,21 +1207,21 @@ textarea:focus:not(:focus-visible) {
     flex: 1;
     min-width: 0;
     height: 100%;
-    color: #ddd;
+    color: #4A5263;
     background: none;
     border: 0;
     font-size: 14px;
 }
 
 .calendar-search-bar input::placeholder {
-    color: #6b6b6b;
+    color: #7A8494;
 }
 
 .calendar-search-bar select {
     height: 42px;
     padding: 0 10px;
-    color: #aaa;
-    background: #292929;
+    color: #5D6E7F;
+    background: #F4F9FB;
     border: 1px solid var(--border);
     border-radius: 7px;
     font-size: 13px;
@@ -1223,8 +1233,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #777;
-    border-left: 1px solid rgba(255,255,255,.06);
+    color: #7A8494;
+    border-left: 1px solid rgba(57, 63, 75,.06);
     font-size: 12px;
 }
 
@@ -1241,7 +1251,7 @@ textarea:focus:not(:focus-visible) {
 
 .calendar-performance-title strong {
     display: block;
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 8px;
     font-weight: 800;
 }
@@ -1249,7 +1259,7 @@ textarea:focus:not(:focus-visible) {
 .calendar-performance-title span {
     display: block;
     margin-top: 3px;
-    color: #666;
+    color: #8A94A5;
     font-size: 7px;
 }
 
@@ -1257,7 +1267,7 @@ textarea:focus:not(:focus-visible) {
     display: flex !important;
     align-items: center;
     gap: 5px;
-    color: #666 !important;
+    color: #8A94A5 !important;
 }
 
 .calendar-performance-grid {
@@ -1271,8 +1281,8 @@ textarea:focus:not(:focus-visible) {
 .at-work-card {
     min-height: 105px;
     padding: 13px;
-    background: #282828;
-    border: 1px solid rgba(255,255,255,.055);
+    background: #F4F9FB;
+    border: 1px solid rgba(57, 63, 75,.055);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -1281,12 +1291,12 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #777;
+    color: #7A8494;
     font-size: 7px;
 }
 
 .performance-card-title i {
-    color: #555;
+    color: #9AA5B4;
 }
 
 .performance-number {
@@ -1297,14 +1307,14 @@ textarea:focus:not(:focus-visible) {
 }
 
 .performance-number strong {
-    color: #eee;
+    color: #393F4B;
     font-size: 23px;
     font-weight: 800;
     letter-spacing: -.04em;
 }
 
 .performance-number span {
-    color: #666;
+    color: #8A94A5;
     font-size: 7px;
 }
 
@@ -1312,16 +1322,16 @@ textarea:focus:not(:focus-visible) {
     margin-top: 5px;
     display: flex;
     justify-content: space-between;
-    color: #555;
+    color: #9AA5B4;
     font-size: 7px;
 }
 
 .positive-performance {
-    color: #64d18a !important;
+    color: #15803d !important;
 }
 
 .blue-performance {
-    color: #70aaff !important;
+    color: #910029 !important;
 }
 
 .performance-wave {
@@ -1335,7 +1345,7 @@ textarea:focus:not(:focus-visible) {
 .performance-wave span {
     width: 15px;
     height: 30%;
-    background: #b8b8b8;
+    background: #910029;
     border-radius: 2px 2px 0 0;
 }
 
@@ -1364,7 +1374,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .performance-wave.purple span {
-    background: #756cff;
+    background: #910029;
 }
 
 .performance-gradient {
@@ -1385,7 +1395,7 @@ textarea:focus:not(:focus-visible) {
 
 .at-work-header span {
     display: block;
-    color: #888;
+    color: #6B7486;
     font-size: 7px;
     font-weight: 800;
     letter-spacing: .08em;
@@ -1394,12 +1404,12 @@ textarea:focus:not(:focus-visible) {
 .at-work-header strong {
     display: block;
     margin-top: 2px;
-    color: #ddd;
+    color: #4A5263;
     font-size: 9px;
 }
 
 .at-work-header > i {
-    color: #888;
+    color: #6B7486;
 }
 
 .at-work-item {
@@ -1417,7 +1427,7 @@ textarea:focus:not(:focus-visible) {
     padding: 0 7px;
     overflow: hidden;
     color: #fff;
-    background: #3d8fc4;
+    background: #910029;
     border: 0;
     border-radius: 4px;
     font-size: 7px;
@@ -1427,16 +1437,16 @@ textarea:focus:not(:focus-visible) {
 }
 
 .at-work-item:nth-child(2) button {
-    background: #438ac4;
+    background: #A5002F;
 }
 
 .at-work-item:nth-child(3) button {
-    background: #e0a137;
-    color: #111;
+    background: #910029;
+    color: #fff;
 }
 
 .at-work-item > span {
-    color: #777;
+    color: #7A8494;
     white-space: nowrap;
     font-size: 7px;
 }
@@ -1444,24 +1454,24 @@ textarea:focus:not(:focus-visible) {
 .at-work-selected {
     margin-top: 8px;
     padding-top: 7px;
-    border-top: 1px solid rgba(255,255,255,.06);
+    border-top: 1px solid rgba(57, 63, 75,.06);
 }
 
 .at-work-empty {
-    color: #5f5f5f;
+    color: #7A8494;
     font-size: 7px;
     line-height: 1.5;
 }
 
 .at-work-selected h4 {
     margin: 0;
-    color: #ddd;
+    color: #4A5263;
     font-size: 8px;
 }
 
 .at-work-selected p {
     margin: 3px 0 0;
-    color: #666;
+    color: #8A94A5;
     font-size: 7px;
 }
 
@@ -1475,8 +1485,8 @@ textarea:focus:not(:focus-visible) {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.055);
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.055);
     border-radius: 10px;
 }
 
@@ -1492,15 +1502,15 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
-    background: #282828;
-    border: 1px solid rgba(255,255,255,.06);
+    color: #6B7486;
+    background: #F4F9FB;
+    border: 1px solid rgba(57, 63, 75,.06);
     border-radius: 7px;
     font-size: 13px;
 }
 
 .calendar-navigation > button:hover {
-    color: #fff;
+    color: #393F4B;
 }
 
 .calendar-navigation .toolbar-today {
@@ -1509,7 +1519,7 @@ textarea:focus:not(:focus-visible) {
 
 .calendar-toolbar-title {
     margin-left: 10px;
-    color: #ddd;
+    color: #4A5263;
     font-size: 16px;
     font-weight: 800;
 }
@@ -1517,14 +1527,14 @@ textarea:focus:not(:focus-visible) {
 .calendar-view-switcher {
     padding: 3px;
     display: flex;
-    background: #171717;
+    background: #EAF2F7;
     border-radius: 7px;
 }
 
 .calendar-view-switcher button {
     height: 36px;
     padding: 0 14px;
-    color: #777;
+    color: #7A8494;
     background: none;
     border: 0;
     border-radius: 5px;
@@ -1533,12 +1543,12 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-view-switcher button:hover {
-    color: #ddd;
+    color: #4A5263;
 }
 
 .calendar-view-switcher button.active {
     color: #fff;
-    background: #414141;
+    background: #910029;
 }
 
 
@@ -1555,8 +1565,8 @@ textarea:focus:not(:focus-visible) {
 .calendar-main-card {
     min-width: 0;
     overflow: hidden;
-    background: #252525;
-    border: 1px solid rgba(255,255,255,.06);
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.06);
     border-radius: 8px;
 }
 
@@ -1566,8 +1576,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #777;
-    border-bottom: 1px solid rgba(255,255,255,.05);
+    color: #7A8494;
+    border-bottom: 1px solid rgba(57, 63, 75,.05);
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .1em;
@@ -1588,13 +1598,13 @@ textarea:focus:not(:focus-visible) {
 .calendar-days-header {
     display: grid;
     grid-template-columns: repeat(7,1fr);
-    background: #202020;
-    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: #FFFFFF;
+    border-bottom: 1px solid rgba(57, 63, 75,.06);
 }
 
 .calendar-day-name {
     padding: 9px 5px;
-    color: #666;
+    color: #8A94A5;
     text-align: center;
     font-size: 7px;
     font-weight: 800;
@@ -1606,43 +1616,43 @@ textarea:focus:not(:focus-visible) {
     display: grid;
     grid-template-columns: repeat(7,minmax(0,1fr));
     grid-auto-rows: minmax(89px,1fr);
-    background: #171717;
+    background: #EAF2F7;
     gap: 1px;
 }
 
 .calendar-empty-day {
     min-height: 89px;
-    background: #222;
+    background: #FFFFFF;
 }
 
 .calendar-day {
     min-height: 89px;
     padding: 6px;
     position: relative;
-    background: #292929;
+    background: #F4F9FB;
     overflow: hidden;
     transition: background .15s ease;
 }
 
 .calendar-day:hover {
-    background: #303030;
+    background: #EDF3F7;
 }
 
 .calendar-day.today {
-    box-shadow: inset 0 0 0 1px rgba(240,165,27,.65);
+    box-shadow: inset 0 0 0 1px rgba(145, 0, 41,.65);
 }
 
 .calendar-day-number {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #777;
+    color: #7A8494;
     font-size: 12px;
     font-weight: 700;
 }
 
 .calendar-day.today .calendar-day-number {
-    color: #f2ad31;
+    color: #910029;
 }
 
 .calendar-add {
@@ -1652,7 +1662,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9a9a9a;
+    color: #6B7486;
     background: none;
     border: 1px solid transparent;
     border-radius: 7px;
@@ -1660,9 +1670,9 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-add:hover {
-    color: #fff;
-    border-color: rgba(255,255,255,.15);
-    background: #333;
+    color: #393F4B;
+    border-color: rgba(57, 63, 75,.15);
+    background: #EDF3F7;
 }
 
 .calendar-day:hover .calendar-add {
@@ -1675,16 +1685,16 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #ddd;
-    background: #1d1d1d;
-    border-left: 2px solid #999;
+    color: #4A5263;
+    background: #EAF2F7;
+    border-left: 2px solid #AEB9C4;
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
 }
 
 .calendar-event:hover {
-    background: #161616;
+    background: #E7EFF4;
 }
 
 .calendar-event.red-border {
@@ -1707,7 +1717,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-event-time {
-    color: #888;
+    color: #6B7486;
 }
 
 .calendar-event-name {
@@ -1718,14 +1728,14 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-event.completed {
-    color: #666;
+    color: #8A94A5;
     text-decoration: line-through;
 }
 
 .calendar-event-delete {
     margin-left: auto;
     opacity: 0;
-    color: #666;
+    color: #8A94A5;
     background: none;
     border: 0;
 }
@@ -1736,7 +1746,7 @@ textarea:focus:not(:focus-visible) {
 
 .more-events {
     margin-top: 3px;
-    color: #777;
+    color: #7A8494;
     font-size: 11px;
 }
 
@@ -1745,21 +1755,21 @@ textarea:focus:not(:focus-visible) {
 
 .day-view {
     min-height: 500px;
-    background: #252525;
+    background: #FFFFFF;
 }
 
 .day-view-heading {
     padding: 14px 16px;
-    color: #fff;
-    background: #202020;
-    border-bottom: 1px solid rgba(255,255,255,.05);
+    color: #393F4B;
+    background: #FFFFFF;
+    border-bottom: 1px solid rgba(57, 63, 75,.05);
     font-size: 14px;
     font-weight: 800;
 }
 
 .priority-chip-small {
     padding: 3px 5px;
-    color: #111;
+    color: #fff;
     border-radius: 3px;
     font-size: 6px;
     font-weight: 900;
@@ -1777,35 +1787,35 @@ textarea:focus:not(:focus-visible) {
 .week-header-row {
     display: grid;
     grid-template-columns: 44px repeat(7,minmax(0,1fr));
-    background: #202020;
-    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: #FFFFFF;
+    border-bottom: 1px solid rgba(57, 63, 75,.06);
 }
 
 .week-gutter-space {
-    border-right: 1px solid rgba(255,255,255,.04);
+    border-right: 1px solid rgba(57, 63, 75,.04);
 }
 
 .week-header-cell {
     padding: 8px 4px;
-    color: #8a8a8a;
+    color: #6B7486;
     text-align: center;
     font-size: 12px;
-    border-right: 1px solid rgba(255,255,255,.04);
+    border-right: 1px solid rgba(57, 63, 75,.04);
 }
 
 .week-header-cell.today {
-    color: #f2ad31;
+    color: #910029;
 }
 
 .week-header-cell strong {
     display: block;
     margin-top: 2px;
-    color: #ddd;
+    color: #4A5263;
     font-size: 13px;
 }
 
 .week-header-cell.today strong {
-    color: #f2ad31;
+    color: #910029;
 }
 
 .week-allday-chip {
@@ -1815,13 +1825,13 @@ textarea:focus:not(:focus-visible) {
     margin: 3px auto 0;
     padding: 3px 5px;
     overflow: hidden;
-    color: #ddd;
+    color: #4A5263;
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
-    background: #1d1d1d;
+    background: #EAF2F7;
     border: 0;
-    border-left: 2px solid #999;
+    border-left: 2px solid #AEB9C4;
     border-radius: 4px;
     cursor: pointer;
     font-size: 11px;
@@ -1833,20 +1843,20 @@ textarea:focus:not(:focus-visible) {
     grid-template-columns: 44px repeat(7,minmax(0,1fr));
     flex: 1;
     min-height: 576px;
-    background: #171717;
+    background: #EAF2F7;
 }
 
 .week-gutter {
     position: relative;
-    background: #202020;
-    border-right: 1px solid rgba(255,255,255,.05);
+    background: #FFFFFF;
+    border-right: 1px solid rgba(57, 63, 75,.05);
 }
 
 .week-hour-label {
     position: absolute;
     right: 8px;
     transform: translateY(-50%);
-    color: #555;
+    color: #9AA5B4;
     font-size: 12px;
     font-weight: 700;
 }
@@ -1854,8 +1864,8 @@ textarea:focus:not(:focus-visible) {
 .week-col {
     position: relative;
     cursor: crosshair;
-    background: #292929;
-    border-right: 1px solid rgba(255,255,255,.04);
+    background: #F4F9FB;
+    border-right: 1px solid rgba(57, 63, 75,.04);
 }
 
 .week-grid-bg {
@@ -1864,8 +1874,8 @@ textarea:focus:not(:focus-visible) {
     pointer-events: none;
     background-image: repeating-linear-gradient(
         to bottom,
-        rgba(255,255,255,.05) 0,
-        rgba(255,255,255,.05) 1px,
+        rgba(57, 63, 75,.05) 0,
+        rgba(57, 63, 75,.05) 1px,
         transparent 1px,
         transparent 48px
     );
@@ -1880,12 +1890,12 @@ textarea:focus:not(:focus-visible) {
     cursor: grab;
     z-index: 5;
     font-size: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.35);
+    box-shadow: 0 1px 3px rgba(57, 63, 75,.35);
 }
 
 .calendar-event-block:hover {
     z-index: 8;
-    outline: 1px solid rgba(255,255,255,.25);
+    outline: 1px solid rgba(57, 63, 75,.25);
 }
 
 .ceb-title {
@@ -1908,7 +1918,7 @@ textarea:focus:not(:focus-visible) {
     left: 0;
     height: 6px;
     cursor: ns-resize;
-    background: rgba(0,0,0,.25);
+    background: rgba(57, 63, 75,.25);
     border-radius: 0 0 4px 4px;
 }
 
@@ -1917,8 +1927,8 @@ textarea:focus:not(:focus-visible) {
     left: 4px;
     right: 4px;
     pointer-events: none;
-    background: rgba(90,167,255,.18);
-    border: 1px solid rgba(90,167,255,.7);
+    background: rgba(145, 0, 41,.18);
+    border: 1px solid rgba(145, 0, 41,.7);
     border-radius: 4px;
     z-index: 4;
 }
@@ -1953,14 +1963,14 @@ textarea:focus:not(:focus-visible) {
     display: grid;
     grid-template-columns: 44px minmax(0,1fr);
     min-height: 576px;
-    background: #252525;
+    background: #FFFFFF;
 }
 
 .day-grid-area {
     position: relative;
     min-height: 576px;
     cursor: crosshair;
-    background: #292929;
+    background: #F4F9FB;
 }
 
 .day-allday-strip {
@@ -1968,8 +1978,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    background: #202020;
-    border-bottom: 1px solid rgba(255,255,255,.05);
+    background: #FFFFFF;
+    border-bottom: 1px solid rgba(57, 63, 75,.05);
 }
 
 .day-allday-strip .week-allday-chip {
@@ -1988,9 +1998,9 @@ textarea:focus:not(:focus-visible) {
 
 .recurrence-options button {
     padding: 10px 6px;
-    color: #aaa;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.08);
+    color: #5D6E7F;
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.08);
     border-radius: 7px;
     cursor: pointer;
     font-size: 13px;
@@ -1998,9 +2008,9 @@ textarea:focus:not(:focus-visible) {
 }
 
 .recurrence-options button.active {
-    color: #111;
-    background: #c0c0c0;
-    border-color: #c0c0c0;
+    color: #fff;
+    background: #910029;
+    border-color: #910029;
 }
 
 .modal-field-btn {
@@ -2008,10 +2018,10 @@ textarea:focus:not(:focus-visible) {
     width: 100%;
     margin-bottom: 6px;
     padding: 12px 14px;
-    color: #ddd;
+    color: #4A5263;
     text-align: left;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.08);
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.08);
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
@@ -2019,8 +2029,8 @@ textarea:focus:not(:focus-visible) {
 }
 
 .modal-field-btn:hover {
-    background: #2a2a2a;
-    border-color: rgba(255,255,255,.15);
+    background: #EDF3F7;
+    border-color: rgba(57, 63, 75,.15);
 }
 
 
@@ -2036,14 +2046,14 @@ textarea:focus:not(:focus-visible) {
 
 .year-month {
     padding: 8px;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.05);
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.05);
     border-radius: 6px;
 }
 
 .year-month h4 {
     margin: 0 0 7px;
-    color: #ddd;
+    color: #4A5263;
     font-size: 14px;
 }
 
@@ -2054,22 +2064,22 @@ textarea:focus:not(:focus-visible) {
 }
 
 .year-week span {
-    color: #555;
+    color: #9AA5B4;
     text-align: center;
     font-size: 11px;
 }
 
 .year-date {
     padding: 5px 1px;
-    color: #777;
+    color: #7A8494;
     text-align: center;
     border-radius: 4px;
     font-size: 11px;
 }
 
 .year-date.has-task {
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     font-weight: 800;
 }
 
@@ -2081,8 +2091,8 @@ textarea:focus:not(:focus-visible) {
 .calendar-analytics {
     min-height: 505px;
     padding: 14px;
-    background: #282828;
-    border: 1px solid rgba(255,255,255,.06);
+    background: #F4F9FB;
+    border: 1px solid rgba(57, 63, 75,.06);
     border-radius: 8px;
 }
 
@@ -2090,11 +2100,11 @@ textarea:focus:not(:focus-visible) {
     padding-bottom: 11px;
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,.06);
+    border-bottom: 1px solid rgba(57, 63, 75,.06);
 }
 
 .analytics-header span {
-    color: #8a8a8a;
+    color: #6B7486;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .13em;
@@ -2102,12 +2112,12 @@ textarea:focus:not(:focus-visible) {
 
 .analytics-header h3 {
     margin: 4px 0 0;
-    color: #fff;
+    color: #393F4B;
     font-size: 16px;
 }
 
 .analytics-header > i {
-    color: #777;
+    color: #7A8494;
     font-size: 20px;
 }
 
@@ -2116,15 +2126,15 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #777;
+    color: #7A8494;
     font-size: 12px;
 }
 
 .analytics-range select {
     height: 36px;
     padding: 0 9px;
-    color: #aaa;
-    background: #202020;
+    color: #5D6E7F;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 7px;
     font-size: 12px;
@@ -2132,7 +2142,7 @@ textarea:focus:not(:focus-visible) {
 
 .analytics-period {
     margin: 7px 0 11px;
-    color: #777;
+    color: #7A8494;
     font-size: 12px;
 }
 
@@ -2144,14 +2154,14 @@ textarea:focus:not(:focus-visible) {
 
 .analytics-metrics > div {
     padding: 11px;
-    background: #202020;
-    border: 1px solid rgba(255,255,255,.045);
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.045);
     border-radius: 8px;
 }
 
 .analytics-metrics span {
     display: block;
-    color: #8a8a8a;
+    color: #6B7486;
     font-size: 12px;
     text-transform: uppercase;
 }
@@ -2159,19 +2169,19 @@ textarea:focus:not(:focus-visible) {
 .analytics-metrics strong {
     display: block;
     margin-top: 3px;
-    color: #eee;
+    color: #393F4B;
     font-size: 22px;
 }
 
 .analytics-section {
     margin-top: 13px;
     padding-top: 11px;
-    border-top: 1px solid rgba(255,255,255,.045);
+    border-top: 1px solid rgba(57, 63, 75,.045);
 }
 
 .analytics-section-title {
     margin-bottom: 8px;
-    color: #999;
+    color: #6B7486;
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
@@ -2184,19 +2194,19 @@ textarea:focus:not(:focus-visible) {
     grid-template-columns: 40px 17px 1fr;
     gap: 5px;
     align-items: center;
-    color: #777;
+    color: #7A8494;
     font-size: 12px;
 }
 
 .distribution-row b {
-    color: #ddd;
+    color: #4A5263;
     text-align: right;
 }
 
 .distribution-row > div {
     height: 4px;
     overflow: hidden;
-    background: #444;
+    background: #E2ECF2;
     border-radius: 5px;
 }
 
@@ -2221,12 +2231,12 @@ textarea:focus:not(:focus-visible) {
     padding: 4px 0;
     display: flex;
     justify-content: space-between;
-    color: #7a7a7a;
+    color: #7A8494;
     font-size: 12px;
 }
 
 .workload-row strong {
-    color: #ddd;
+    color: #4A5263;
 }
 
 .analytics-bars {
@@ -2253,25 +2263,25 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: flex-end;
     overflow: hidden;
-    background: #3e3e3e;
+    background: #E2ECF2;
     border-radius: 3px 3px 1px 1px;
 }
 
 .analytics-bar {
     width: 100%;
     min-height: 2px;
-    background: #aaa;
+    background: #AEB9C4;
     border-radius: 3px 3px 0 0;
 }
 
 .analytics-bar-wrap em {
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 12px;
     font-style: normal;
 }
 
 .analytics-bar-wrap label {
-    color: #7a7a7a;
+    color: #7A8494;
     font-size: 12px;
 }
 
@@ -2286,26 +2296,26 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    color: #8a8a8a;
-    background: #222;
-    border: 1px solid rgba(255,255,255,.045);
+    color: #6B7486;
+    background: #FFFFFF;
+    border: 1px solid rgba(57, 63, 75,.045);
     border-radius: 7px;
     font-size: 12px;
     line-height: 1.5;
 }
 
 .analytics-insights i {
-    color: #aaa;
+    color: #5D6E7F;
 }
 
 .analytics-insights b {
-    color: #ddd;
+    color: #4A5263;
 }
 
 .selected-task-card {
     margin-top: 10px;
     padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,.06);
+    border-top: 1px solid rgba(57, 63, 75,.06);
 }
 
 .selected-task-empty {
@@ -2313,7 +2323,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     gap: 8px;
     align-items: center;
-    color: #5f5f5f;
+    color: #7A8494;
     font-size: 12px;
     line-height: 1.5;
 }
@@ -2326,7 +2336,7 @@ textarea:focus:not(:focus-visible) {
 
 .priority-chip {
     padding: 4px 8px;
-    color: #111;
+    color: #fff;
     border-radius: 5px;
     font-size: 10px;
     font-weight: 900;
@@ -2339,7 +2349,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #666;
+    color: #8A94A5;
     background: none;
     border: 0;
     border-radius: 6px;
@@ -2347,19 +2357,19 @@ textarea:focus:not(:focus-visible) {
 }
 
 .selected-task-header button:hover {
-    color: #ef7777;
-    background: #2a2a2a;
+    color: #b91c1c;
+    background: #EDF3F7;
 }
 
 .selected-task-card h4 {
     margin: 8px 0 3px;
-    color: #eee;
+    color: #393F4B;
     font-size: 14px;
 }
 
 .selected-task-card > p {
     margin: 0;
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
 }
 
@@ -2368,15 +2378,15 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    color: #888;
+    color: #6B7486;
     font-size: 11px;
 }
 
 .selected-task-complete {
     width: 100%;
     height: 40px;
-    color: #111;
-    background: #f0a51d;
+    color: #fff;
+    background: #910029;
     border: 0;
     border-radius: 8px;
     font-size: 13px;
@@ -2384,7 +2394,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .selected-task-complete:hover {
-    background: #ffb52b;
+    background: #A5002F;
 }
 
 
@@ -2394,7 +2404,7 @@ textarea:focus:not(:focus-visible) {
 
 .standard-panel {
     padding: 18px;
-    background: #303030;
+    background: #EDF3F7;
     border: 1px solid var(--border);
     border-radius: 12px;
 }
@@ -2411,7 +2421,7 @@ textarea:focus:not(:focus-visible) {
 .standard-panel-heading h2,
 .task-manager-header h2 {
     margin: 5px 0 3px;
-    color: #fff;
+    color: #393F4B;
     font-size: 22px;
     font-weight: 800;
 }
@@ -2419,15 +2429,15 @@ textarea:focus:not(:focus-visible) {
 .standard-panel-heading p,
 .task-manager-header p {
     margin: 0;
-    color: #777;
+    color: #7A8494;
     font-size: 13px;
 }
 
 .light-action-btn {
     height: 40px;
     padding: 0 16px;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border: 0;
     border-radius: 8px;
     font-size: 13px;
@@ -2435,13 +2445,13 @@ textarea:focus:not(:focus-visible) {
 }
 
 .light-action-btn:hover {
-    background: #fff;
+    background: #A5002F;
 }
 
 .outline-btn {
     height: 40px;
     padding: 0 14px;
-    color: #aaa;
+    color: #5D6E7F;
     background: transparent;
     border: 1px solid var(--border-strong);
     border-radius: 8px;
@@ -2449,8 +2459,8 @@ textarea:focus:not(:focus-visible) {
 }
 
 .outline-btn:hover {
-    color: #fff;
-    border-color: #aaa;
+    color: #393F4B;
+    border-color: #5D6E7F;
 }
 
 .table-wrapper {
@@ -2468,7 +2478,7 @@ textarea:focus:not(:focus-visible) {
 .data-table th,
 .task-manager-table th {
     padding: 13px 7px;
-    color: #777;
+    color: #7A8494;
     border-bottom: 1px solid var(--border);
     font-size: 12px;
     text-align: left;
@@ -2479,17 +2489,17 @@ textarea:focus:not(:focus-visible) {
 .data-table td,
 .task-manager-table td {
     padding: 11px 7px;
-    color: #aaa;
-    border-bottom: 1px solid rgba(255,255,255,.045);
+    color: #5D6E7F;
+    border-bottom: 1px solid rgba(57, 63, 75,.045);
 }
 
 .data-table tr:hover td,
 .task-manager-table tr:hover td {
-    background: #282828;
+    background: #F4F9FB;
 }
 
 .data-table input {
-    accent-color: #c0c0c0;
+    accent-color: #910029;
 }
 
 
@@ -2504,7 +2514,7 @@ textarea:focus:not(:focus-visible) {
 
 .meal-card {
     padding: 13px;
-    background: #202020;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 8px;
 }
@@ -2512,7 +2522,7 @@ textarea:focus:not(:focus-visible) {
 .meal-card h4 {
     margin: 0 0 9px;
     padding-bottom: 8px;
-    color: #fff;
+    color: #393F4B;
     border-bottom: 1px solid var(--border);
     font-size: 15px;
 }
@@ -2523,7 +2533,7 @@ textarea:focus:not(:focus-visible) {
 
 .meal-item span {
     display: block;
-    color: #666;
+    color: #8A94A5;
     font-size: 10px;
     text-transform: uppercase;
 }
@@ -2531,7 +2541,7 @@ textarea:focus:not(:focus-visible) {
 .meal-item strong {
     display: block;
     margin-top: 2px;
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 13px;
     font-weight: 500;
 }
@@ -2540,15 +2550,15 @@ textarea:focus:not(:focus-visible) {
     width: 100%;
     height: 38px;
     margin-top: 6px;
-    color: #aaa;
-    background: #292929;
+    color: #5D6E7F;
+    background: #F4F9FB;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 13px;
 }
 
 .meal-edit:hover {
-    color: #fff;
+    color: #393F4B;
 }
 
 
@@ -2567,7 +2577,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background: #202020;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 10px;
     transition: border-color .2s ease, transform .2s ease;
@@ -2588,7 +2598,7 @@ textarea:focus:not(:focus-visible) {
 
 .note-head h4 {
     margin: 0;
-    color: #eee;
+    color: #393F4B;
     font-size: 16px;
 }
 
@@ -2598,25 +2608,25 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #777;
+    color: #7A8494;
     background: none;
     border: 0;
     border-radius: 7px;
 }
 
 .note-head button:hover {
-    color: #fff;
-    background: #2c2c2c;
+    color: #393F4B;
+    background: #E7EFF4;
 }
 
 .note-head button:hover {
-    color: #fff;
-    background: #2a2a2a;
+    color: #393F4B;
+    background: #EDF3F7;
 }
 
 .note-content {
     margin-top: 10px;
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 13px;
     line-height: 1.6;
     white-space: pre-wrap;
@@ -2645,14 +2655,14 @@ textarea:focus:not(:focus-visible) {
     min-height: 82px;
     padding: 13px;
     position: relative;
-    background: #292929;
+    background: #F4F9FB;
     border: 1px solid var(--border);
     border-radius: 8px;
 }
 
 .task-summary-card span {
     display: block;
-    color: #8a8a8a;
+    color: #6B7486;
     font-size: 13px;
     text-transform: uppercase;
 }
@@ -2660,7 +2670,7 @@ textarea:focus:not(:focus-visible) {
 .task-summary-card strong {
     display: block;
     margin-top: 7px;
-    color: #eee;
+    color: #393F4B;
     font-size: 28px;
     font-weight: 800;
 }
@@ -2669,22 +2679,22 @@ textarea:focus:not(:focus-visible) {
     position: absolute;
     top: 16px;
     right: 15px;
-    color: #666;
+    color: #8A94A5;
     font-size: 18px;
 }
 
 .task-summary-card.danger strong {
-    color: #ed8c8c;
+    color: #b91c1c;
 }
 
 .task-summary-card.danger-soft strong {
-    color: #d8aa62;
+    color: #A5002F;
 }
 
 .task-manager-panel {
     margin-top: 14px;
     padding: 14px;
-    background: #303030;
+    background: #EDF3F7;
     border: 1px solid var(--border);
     border-radius: 10px;
 }
@@ -2704,8 +2714,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 9px;
-    color: #666;
-    background: #202020;
+    color: #8A94A5;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 8px;
 }
@@ -2717,7 +2727,7 @@ textarea:focus:not(:focus-visible) {
 .task-manager-search input {
     width: 100%;
     height: 100%;
-    color: #ddd;
+    color: #4A5263;
     background: none;
     border: 0;
     font-size: 14px;
@@ -2726,8 +2736,8 @@ textarea:focus:not(:focus-visible) {
 .task-manager-toolbar > select {
     height: 40px;
     padding: 0 10px;
-    color: #aaa;
-    background: #202020;
+    color: #5D6E7F;
+    background: #FFFFFF;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 13px;
@@ -2736,8 +2746,8 @@ textarea:focus:not(:focus-visible) {
 .task-tool-btn {
     height: 40px;
     padding: 0 13px;
-    color: #aaa;
-    background: #242424;
+    color: #5D6E7F;
+    background: #F6FAFC;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 13px;
@@ -2745,7 +2755,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .task-tool-btn:hover {
-    color: #fff;
+    color: #393F4B;
 }
 
 .bulk-toolbar {
@@ -2755,8 +2765,8 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #777;
-    background: #242424;
+    color: #7A8494;
+    background: #F6FAFC;
     border-radius: 8px;
     font-size: 12px;
 }
@@ -2768,11 +2778,11 @@ textarea:focus:not(:focus-visible) {
 }
 
 .bulk-toolbar input {
-    accent-color: #c0c0c0;
+    accent-color: #910029;
 }
 
 .bulk-toolbar > span {
-    color: #aaa;
+    color: #5D6E7F;
 }
 
 .bulk-toolbar > div {
@@ -2784,15 +2794,15 @@ textarea:focus:not(:focus-visible) {
 .bulk-toolbar button {
     height: 36px;
     padding: 0 10px;
-    color: #aaa;
-    background: #303030;
+    color: #5D6E7F;
+    background: #EDF3F7;
     border: 1px solid var(--border);
     border-radius: 7px;
     font-size: 12px;
 }
 
 .bulk-toolbar button.danger {
-    color: #e17f7f;
+    color: #b91c1c;
 }
 
 .task-manager-table {
@@ -2811,14 +2821,14 @@ textarea:focus:not(:focus-visible) {
 
 .task-status-wrap input,
 .task-name-main input {
-    accent-color: #c0c0c0;
+    accent-color: #910029;
 }
 
 .task-status-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #e1aa44;
+    background: #910029;
 }
 
 .task-status-dot.done {
@@ -2829,19 +2839,19 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #ddd;
+    color: #4A5263;
     font-size: 14px;
     font-weight: 700;
 }
 
 .task-name-main.completed {
-    color: #666;
+    color: #8A94A5;
     text-decoration: line-through;
 }
 
 .task-name-sub {
     margin-top: 3px;
-    color: #666;
+    color: #8A94A5;
     font-size: 12px;
 }
 
@@ -2858,38 +2868,38 @@ textarea:focus:not(:focus-visible) {
 }
 
 .task-priority-chip.red {
-    color: #ffb2b2;
+    color: #b91c1c;
     background: rgba(239,68,68,.12);
 }
 
 .task-priority-chip.yellow {
-    color: #eac76c;
+    color: #8a6d00;
     background: rgba(234,179,8,.12);
 }
 
 .task-priority-chip.green {
-    color: #6bd98c;
+    color: #15803d;
     background: rgba(34,197,94,.12);
 }
 
 .task-reminder-chip {
-    color: #aaa;
-    background: #242424;
+    color: #5D6E7F;
+    background: #F6FAFC;
 }
 
 .task-type-chip {
-    color: #999;
-    background: #242424;
+    color: #6B7486;
+    background: #F6FAFC;
 }
 
 .task-schedule-main {
-    color: #ddd;
+    color: #4A5263;
     font-size: 13px;
 }
 
 .task-schedule-sub {
     margin-top: 3px;
-    color: #7a7a7a;
+    color: #7A8494;
     font-size: 12px;
 }
 
@@ -2917,19 +2927,19 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
-    background: #242424;
+    color: #6B7486;
+    background: #F6FAFC;
     border: 1px solid var(--border);
     border-radius: 7px;
     font-size: 13px;
 }
 
 .task-action-btn:hover {
-    color: #fff;
+    color: #393F4B;
 }
 
 .task-action-btn.delete:hover {
-    color: #ef7777;
+    color: #b91c1c;
 }
 
 .task-empty {
@@ -2940,20 +2950,20 @@ textarea:focus:not(:focus-visible) {
 .task-empty i {
     display: block;
     margin-bottom: 12px;
-    color: #555;
+    color: #9AA5B4;
     font-size: 40px;
 }
 
 .task-empty strong {
     display: block;
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 16px;
 }
 
 .task-empty span {
     display: block;
     margin-top: 5px;
-    color: #666;
+    color: #8A94A5;
     font-size: 13px;
 }
 
@@ -2970,7 +2980,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,.78);
+    background: rgba(57, 63, 75,.78);
     backdrop-filter: blur(10px);
 }
 
@@ -2979,10 +2989,10 @@ textarea:focus:not(:focus-visible) {
     max-width: 520px;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
-    background: #292929;
-    border: 1px solid rgba(255,255,255,.1);
+    background: #F4F9FB;
+    border: 1px solid rgba(57, 63, 75,.1);
     border-radius: 12px;
-    box-shadow: 0 30px 90px rgba(0,0,0,.6);
+    box-shadow: 0 30px 90px rgba(57, 63, 75,.6);
 }
 
 .modal-header {
@@ -2990,19 +3000,19 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #1d1d1d;
+    background: #EAF2F7;
     border-bottom: 1px solid var(--border);
 }
 
 .modal-header span {
-    color: #666;
+    color: #8A94A5;
     font-size: 10px;
     letter-spacing: .15em;
 }
 
 .modal-header h3 {
     margin: 4px 0 0;
-    color: #fff;
+    color: #393F4B;
     font-size: 18px;
 }
 
@@ -3012,7 +3022,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #777;
+    color: #7A8494;
     background: none;
     border: 0;
     border-radius: 6px;
@@ -3020,8 +3030,8 @@ textarea:focus:not(:focus-visible) {
 }
 
 .modal-header button:hover {
-    color: #fff;
-    background: #2a2a2a;
+    color: #393F4B;
+    background: #EDF3F7;
 }
 
 .modal-body {
@@ -3035,7 +3045,7 @@ textarea:focus:not(:focus-visible) {
 .modal-field label {
     display: block;
     margin-bottom: 6px;
-    color: #777;
+    color: #7A8494;
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
@@ -3048,9 +3058,9 @@ textarea:focus:not(:focus-visible) {
     width: 100%;
     height: 42px;
     padding: 0 12px;
-    color: #ddd;
-    background: #1c1c1c;
-    border: 1px solid rgba(255,255,255,.08);
+    color: #4A5263;
+    background: #F4F9FB;
+    border: 1px solid rgba(57, 63, 75,.08);
     border-radius: 8px;
     font-size: 14px;
 }
@@ -3065,12 +3075,12 @@ textarea:focus:not(:focus-visible) {
 .modal-field input:focus,
 .modal-field select:focus,
 .modal-field textarea:focus {
-    border-color: #777;
+    border-color: #7A8494;
 }
 
 .modal-field input::placeholder,
 .modal-field textarea::placeholder {
-    color: #5a5a5a;
+    color: #8A94A5;
 }
 
 .modal-two {
@@ -3084,7 +3094,7 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    background: #1d1d1d;
+    background: #EAF2F7;
     border-top: 1px solid var(--border);
 }
 
@@ -3098,19 +3108,19 @@ textarea:focus:not(:focus-visible) {
 }
 
 .modal-cancel {
-    color: #888;
-    background: #202020;
+    color: #6B7486;
+    background: #FFFFFF;
     border: 1px solid var(--border);
 }
 
 .modal-save {
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border: 0;
 }
 
 .modal-save:hover {
-    background: #fff;
+    background: #A5002F;
 }
 
 
@@ -3121,8 +3131,8 @@ textarea:focus:not(:focus-visible) {
     max-width: 340px;
     padding: 25px;
     text-align: center;
-    background: #292929;
-    border: 1px solid #c0c0c0;
+    background: #F4F9FB;
+    border: 1px solid #910029;
     border-radius: 13px;
 }
 
@@ -3133,14 +3143,14 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border-radius: 50%;
     font-size: 20px;
 }
 
 .reminder-label {
-    color: #777;
+    color: #7A8494;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: .13em;
@@ -3148,21 +3158,21 @@ textarea:focus:not(:focus-visible) {
 
 .reminder-modal h3 {
     margin: 5px 0;
-    color: #fff;
+    color: #393F4B;
     font-size: 18px;
 }
 
 .reminder-modal p {
     margin: 0 0 16px;
-    color: #aaa;
+    color: #5D6E7F;
     font-size: 13px;
 }
 
 .reminder-modal button {
     width: 100%;
     height: 42px;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border: 0;
     border-radius: 8px;
     font-size: 14px;
@@ -3348,7 +3358,7 @@ textarea:focus:not(:focus-visible) {
         padding: 11px 0 0;
         text-align: left;
         border-left: 0;
-        border-top: 1px solid rgba(255,255,255,.08);
+        border-top: 1px solid rgba(57, 63, 75,.08);
     }
 
     .dashboard-stat-grid {
@@ -3446,408 +3456,91 @@ textarea:focus:not(:focus-visible) {
 
 }
 
-/* =========================================================
-   THEME SYSTEM (light)
-========================================================= */
 
-[data-theme="light"] {
-    --matt: #f2f3f5;
-    --jet: #ffffff;
-    --surface: #ffffff;
-    --surface-2: #f7f8fa;
-    --surface-3: #eef0f3;
 
-    --border: rgba(15, 23, 42, .10);
-    --border-strong: rgba(15, 23, 42, .17);
 
-    --text: #16181d;
-    --silver: #3f4550;
-    --muted: #6b7280;
-    --muted-2: #9ca3af;
 
-    --green: #16a34a;
-    --yellow: #ca8a04;
-    --red: #dc2626;
-
-    --blue: #2563eb;
-    --purple: #7c5cff;
-    --orange: #d97706;
-}
-
-[data-theme="light"] ::-webkit-scrollbar-track {
-    background: #f2f3f5;
-}
-
-[data-theme="light"] ::-webkit-scrollbar-thumb {
-    background: #c4c8cf;
-}
-
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-    background: #a9aeb6;
-}
 
 /* SIDEBAR */
-[data-theme="light"] .app-sidebar {
-    background: #ffffff;
-    border-right-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .sidebar-brand {
-    border-bottom-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .sidebar-brand strong {
-    color: #16181d;
-}
 
-[data-theme="light"] .sidebar-brand small,
-[data-theme="light"] .nav-label {
-    color: #9ca3af;
-}
 
-[data-theme="light"] .nav-item {
-    color: #4b5563;
-}
 
-[data-theme="light"] .nav-item i {
-    color: #7c838f;
-}
 
-[data-theme="light"] .nav-item:hover {
-    color: #16181d;
-    background: #f1f2f5;
-}
 
-[data-theme="light"] .nav-item:hover i {
-    color: #16181d;
-}
 
-[data-theme="light"] .nav-item.active {
-    color: #16181d;
-    background: #e8eaee;
-    box-shadow: none;
-}
 
-[data-theme="light"] .nav-item.active i {
-    color: #d97706;
-}
 
-[data-theme="light"] .nav-count {
-    color: #4b5563;
-    background: #e8eaee;
-}
 
-[data-theme="light"] .sidebar-bottom {
-    border-top-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .reminder-status {
-    background: #f7f8fa;
-    border-color: rgba(15, 23, 42, .08);
-}
 
-[data-theme="light"] .reminder-icon {
-    background: #e8eaee;
-}
 
-[data-theme="light"] .reminder-status span {
-    color: #9ca3af;
-}
 
-[data-theme="light"] .reminder-status strong {
-    color: #16a34a;
-}
 
-[data-theme="light"] .sidebar-profile strong {
-    color: #16181d;
-}
 
-[data-theme="light"] .sidebar-profile span {
-    color: #9ca3af;
-}
 
 /* HEADER */
-[data-theme="light"] .header-kicker {
-    color: #9ca3af;
-}
 
-[data-theme="light"] .top-header h1 {
-    color: #16181d;
-}
 
-[data-theme="light"] .live-clock {
-    color: #4b5563;
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .header-create {
-    color: #ffffff;
-    background: #16181d;
-}
 
-[data-theme="light"] .header-create:hover {
-    background: #2a2f3a;
-}
 
 /* PANELS + TABLES */
-[data-theme="light"] .standard-panel {
-    background: #ffffff;
-}
 
-[data-theme="light"] .standard-panel-heading h2,
-[data-theme="light"] .task-manager-header h2 {
-    color: #16181d;
-}
 
-[data-theme="light"] .standard-panel-heading p,
-[data-theme="light"] .task-manager-header p {
-    color: #6b7280;
-}
 
-[data-theme="light"] .light-action-btn {
-    color: #ffffff;
-    background: #16181d;
-}
 
-[data-theme="light"] .light-action-btn:hover {
-    background: #2a2f3a;
-}
 
-[data-theme="light"] .outline-btn {
-    color: #4b5563;
-    border-color: rgba(15, 23, 42, .18);
-}
 
-[data-theme="light"] .outline-btn:hover {
-    color: #16181d;
-    border-color: #4b5563;
-}
 
-[data-theme="light"] .data-table th,
-[data-theme="light"] .task-manager-table th {
-    color: #6b7280;
-}
 
-[data-theme="light"] .data-table td,
-[data-theme="light"] .task-manager-table td {
-    color: #374151;
-    border-bottom-color: rgba(15, 23, 42, .07);
-}
 
-[data-theme="light"] .data-table tr:hover td,
-[data-theme="light"] .task-manager-table tr:hover td {
-    background: #f7f8fa;
-}
 
 /* GENERIC INPUTS */
-[data-theme="light"] input[type="text"],
-[data-theme="light"] input[type="date"],
-[data-theme="light"] input[type="time"],
-[data-theme="light"] input[type="number"],
-[data-theme="light"] input[type="search"],
-[data-theme="light"] select,
-[data-theme="light"] textarea {
-    color: #16181d;
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .14);
-}
 
-[data-theme="light"] input::placeholder,
-[data-theme="light"] textarea::placeholder {
-    color: #9ca3af;
-}
 
 /* CALENDAR */
-[data-theme="light"] .calendar-main-toolbar {
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .calendar-navigation > button {
-    color: #4b5563;
-    background: #f3f4f6;
-    border-color: rgba(15, 23, 42, .08);
-}
 
-[data-theme="light"] .calendar-navigation > button:hover {
-    color: #16181d;
-}
 
-[data-theme="light"] .calendar-toolbar-title {
-    color: #16181d;
-}
 
-[data-theme="light"] .calendar-view-switcher {
-    background: #eef0f3;
-}
 
-[data-theme="light"] .calendar-view-switcher button {
-    color: #6b7280;
-}
 
-[data-theme="light"] .calendar-view-switcher button:hover {
-    color: #16181d;
-}
 
-[data-theme="light"] .calendar-view-switcher button.active {
-    color: #ffffff;
-    background: #16181d;
-}
 
-[data-theme="light"] .calendar-main-card {
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .calendar-card-top {
-    color: #6b7280;
-    border-bottom-color: rgba(15, 23, 42, .08);
-}
 
-[data-theme="light"] .calendar-days-header {
-    background: #ffffff;
-    border-bottom-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .calendar-day-name {
-    color: #9ca3af;
-}
 
-[data-theme="light"] .calendar-month-grid {
-    background: #e5e7eb;
-}
 
-[data-theme="light"] .calendar-empty-day {
-    background: #f3f4f6;
-}
 
-[data-theme="light"] .calendar-day {
-    background: #ffffff;
-}
 
-[data-theme="light"] .calendar-day:hover {
-    background: #f8f9fb;
-}
 
-[data-theme="light"] .calendar-day-number {
-    color: #6b7280;
-}
 
-[data-theme="light"] .calendar-add:hover {
-    color: #16181d;
-    background: #eef0f3;
-    border-color: rgba(15, 23, 42, .12);
-}
 
-[data-theme="light"] .calendar-event {
-    color: #16181d;
-    background: #f3f4f6;
-}
 
-[data-theme="light"] .calendar-event:hover {
-    background: #e8eaee;
-}
 
-[data-theme="light"] .calendar-event-time {
-    color: #6b7280;
-}
 
-[data-theme="light"] .calendar-event.completed {
-    color: #9ca3af;
-}
 
-[data-theme="light"] .more-events {
-    color: #4b5563;
-}
 
-[data-theme="light"] .day-view {
-    background: #ffffff;
-}
 
-[data-theme="light"] .day-view-heading {
-    color: #16181d;
-    background: #ffffff;
-    border-bottom-color: rgba(15, 23, 42, .08);
-}
 
-[data-theme="light"] .week-hour-label,
-[data-theme="light"] .week-grid-bg {
-    color: #6b7280;
-    border-color: rgba(15, 23, 42, .06);
-}
 
-[data-theme="light"] .calendar-analytics,
-[data-theme="light"] .analytics-header,
-[data-theme="light"] .analytics-section,
-[data-theme="light"] .selected-task-card {
-    border-color: rgba(15, 23, 42, .08);
-}
 
-[data-theme="light"] .calendar-page-header h2 {
-    color: #16181d;
-}
 
-[data-theme="light"] .calendar-page-header p {
-    color: #6b7280;
-}
 
-[data-theme="light"] .calendar-dark-btn {
-    color: #374151;
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .14);
-}
 
-[data-theme="light"] .calendar-dark-btn:hover {
-    color: #16181d;
-    border-color: #4b5563;
-}
 
-[data-theme="light"] .calendar-search-bar {
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .10);
-}
 
-[data-theme="light"] .calendar-search-bar input {
-    color: #16181d;
-}
 
 /* MODALS */
-[data-theme="light"] .modal-box {
-    background: #ffffff;
-    border-color: rgba(15, 23, 42, .12);
-    box-shadow: 0 30px 90px rgba(15, 23, 42, .25);
-}
 
-[data-theme="light"] .modal-header {
-    background: #ffffff;
-}
 
-[data-theme="light"] .modal-header h3 {
-    color: #16181d;
-}
 
-[data-theme="light"] .modal-header button:hover {
-    color: #16181d;
-    background: #f1f2f5;
-}
 
-[data-theme="light"] .modal-field label {
-    color: #6b7280;
-}
 
-[data-theme="light"] .modal-field input,
-[data-theme="light"] .modal-field select,
-[data-theme="light"] .modal-field textarea {
-    color: #16181d;
-    background: #f8f9fb;
-    border-color: rgba(15, 23, 42, .12);
-}
 
-[data-theme="light"] .modal-field input::placeholder,
-[data-theme="light"] .modal-field textarea::placeholder {
-    color: #9ca3af;
-}
 
 /* =========================================================
    NEW COMPONENTS
@@ -3894,15 +3587,15 @@ textarea:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #111;
-    background: #c0c0c0;
+    color: #fff;
+    background: #910029;
     border: 0;
     border-radius: 8px;
     font-size: 17px;
 }
 
 .quick-add-trigger:hover {
-    background: #fff;
+    background: #A5002F;
 }
 
 .quick-add-menu {
@@ -3915,12 +3608,9 @@ textarea:focus:not(:focus-visible) {
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .55);
+    box-shadow: 0 20px 60px rgba(57, 63, 75,.55);
 }
 
-[data-theme="light"] .quick-add-menu {
-    box-shadow: 0 20px 60px rgba(15, 23, 42, .18);
-}
 
 .quick-add-menu-title {
     padding: 6px 10px 8px;
@@ -3969,12 +3659,9 @@ textarea:focus:not(:focus-visible) {
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: 12px;
-    box-shadow: 0 30px 90px rgba(0, 0, 0, .65);
+    box-shadow: 0 30px 90px rgba(57, 63, 75,.65);
 }
 
-[data-theme="light"] .cmd-palette {
-    box-shadow: 0 30px 90px rgba(15, 23, 42, .25);
-}
 
 .cmd-search {
     height: 56px;
@@ -4045,7 +3732,7 @@ textarea:focus:not(:focus-visible) {
 
 .cmd-item.active i,
 .cmd-item:hover i {
-    color: #f0a51d;
+    color: #910029;
 }
 
 .cmd-empty {
@@ -4131,14 +3818,11 @@ textarea:focus:not(:focus-visible) {
     background: var(--jet);
     border: 1px solid var(--border-strong);
     border-radius: 10px;
-    box-shadow: 0 16px 50px rgba(0, 0, 0, .5);
+    box-shadow: 0 16px 50px rgba(57, 63, 75,.5);
     color: var(--text);
     font-size: 13px;
 }
 
-[data-theme="light"] .undo-toast {
-    box-shadow: 0 16px 50px rgba(15, 23, 42, .18);
-}
 
 .undo-toast > span i {
     color: var(--green);
@@ -4147,16 +3831,16 @@ textarea:focus:not(:focus-visible) {
 .undo-toast button {
     height: 30px;
     padding: 0 12px;
-    color: #f0a51d;
+    color: #910029;
     background: none;
-    border: 1px solid rgba(240, 165, 29, .35);
+    border: 1px solid rgba(145, 0, 41,.35);
     border-radius: 6px;
     font-size: 12px;
     font-weight: 800;
 }
 
 .undo-toast button:hover {
-    background: rgba(240, 165, 29, .12);
+    background: rgba(145, 0, 41,.12);
 }
 
 /* IMPORT / EXPORT */
@@ -4205,7 +3889,7 @@ textarea:focus:not(:focus-visible) {
 
 .modal-field-btn.danger {
     color: #f87171;
-    border-color: rgba(248, 113, 113, .35);
+    border-color: rgba(248, 113, 113,.35);
 }
 
 .io-confirm {
@@ -4239,12 +3923,12 @@ textarea:focus:not(:focus-visible) {
 
 .io-status.ok {
     color: #4ade80;
-    background: rgba(34, 197, 94, .12);
+    background: rgba(34, 197, 94,.12);
 }
 
 .io-status.err {
     color: #f87171;
-    background: rgba(239, 68, 68, .12);
+    background: rgba(239, 68, 68,.12);
 }
 
 /* ANALYTICS VIEW */
@@ -4262,9 +3946,6 @@ textarea:focus:not(:focus-visible) {
     border-radius: 10px;
 }
 
-[data-theme="light"] .analytics-kpi {
-    background: var(--surface-2);
-}
 
 .analytics-kpi > span {
     display: block;
@@ -4301,9 +3982,6 @@ textarea:focus:not(:focus-visible) {
     border-radius: 10px;
 }
 
-[data-theme="light"] .analytics-block {
-    background: var(--surface-2);
-}
 
 .analytics-section-title {
     margin-bottom: 12px;
@@ -4358,7 +4036,7 @@ textarea:focus:not(:focus-visible) {
 .activity-bar {
     width: 100%;
     min-height: 6px;
-    background: linear-gradient(180deg, #f0a51d, #d97706);
+    background: linear-gradient(180deg, #910029, #A5002F);
     border-radius: 3px 3px 0 0;
     transition: height .2s ease;
 }
@@ -4436,9 +4114,6 @@ textarea:focus:not(:focus-visible) {
     border-radius: 10px;
 }
 
-[data-theme="light"] .goals-overall {
-    background: var(--surface-2);
-}
 
 .goals-overall > span {
     color: var(--muted);
@@ -4468,12 +4143,9 @@ textarea:focus:not(:focus-visible) {
     border-radius: 10px;
 }
 
-[data-theme="light"] .goal-card {
-    background: var(--surface-2);
-}
 
 .goal-card.done {
-    border-color: rgba(34, 197, 94, .4);
+    border-color: rgba(34, 197, 94,.4);
 }
 
 .goal-card-top {
@@ -4491,7 +4163,7 @@ textarea:focus:not(:focus-visible) {
 
 .goal-done-badge {
     padding: 3px 8px;
-    color: #111;
+    color: #fff;
     background: var(--green);
     border-radius: 20px;
     font-size: 10px;
@@ -4550,9 +4222,6 @@ textarea:focus:not(:focus-visible) {
     border-radius: 10px;
 }
 
-[data-theme="light"] .goals-form {
-    background: var(--surface-2);
-}
 
 .goals-form input {
     height: 38px;
@@ -4589,9 +4258,6 @@ textarea:focus:not(:focus-visible) {
     border-radius: 10px;
 }
 
-[data-theme="light"] .reminder-row {
-    background: var(--surface-2);
-}
 
 .reminder-row input[type="checkbox"] {
     width: 16px;
@@ -4661,7 +4327,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .habit-day-cell.checked {
-    color: #111;
+    color: #fff;
     background: var(--green);
     border-color: var(--green);
 }
@@ -4680,7 +4346,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .habit-streak-chip.active {
-    color: #111;
+    color: #fff;
     background: var(--orange);
     border-color: var(--orange);
 }
@@ -4749,9 +4415,6 @@ textarea:focus:not(:focus-visible) {
     font-size: 12px;
 }
 
-[data-theme="light"] .calendar-date-jump input[type="date"] {
-    color: #4b5563;
-}
 
 .calendar-day-events {
     margin-top: 4px;
@@ -4762,7 +4425,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .calendar-event {
-    border-left-color: var(--evt-color, #999);
+    border-left-color: var(--evt-color, #AEB9C4);
 }
 
 .calendar-empty-state {
@@ -4834,7 +4497,7 @@ textarea:focus:not(:focus-visible) {
 
     .app-sidebar.open {
         transform: translateX(0);
-        box-shadow: 0 0 60px rgba(0, 0, 0, .5);
+        box-shadow: 0 0 60px rgba(57, 63, 75,.5);
     }
 
     .sidebar-backdrop {
@@ -4842,7 +4505,7 @@ textarea:focus:not(:focus-visible) {
         position: fixed;
         inset: 0;
         z-index: 54;
-        background: rgba(0, 0, 0, .5);
+        background: rgba(57, 63, 75,.5);
     }
 
     .mobile-menu-btn {
@@ -4890,4 +4553,35 @@ textarea:focus:not(:focus-visible) {
         width: 36px;
         height: 36px;
     }
+}
+/* TASK COLOR SELECTOR */
+.task-color-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.task-color-swatch {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.task-color-swatch:hover {
+    transform: scale(1.12);
+}
+
+.task-color-swatch--active {
+    border-color: #393F4B;
+    box-shadow: 0 0 0 3px rgba(57, 63, 75, .25);
+    transform: scale(1.06);
 }

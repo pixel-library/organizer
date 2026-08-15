@@ -160,7 +160,7 @@ export default function MealEditor({ meal, preset, onSave, onClose }) {
           </div>
           <div className="modal-field">
             <label>Notes</label>
-            <textarea placeholder="Any notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} style={{ width: "100%", background: "#1c1c1c", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, color: "#ddd", padding: "10px 12px", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
+            <textarea placeholder="Any notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} style={{ width: "100%", background: "#FFFFFF", border: "1px solid rgba(57,63,75,.14)", borderRadius: 8, color: "#393F4B", padding: "10px 12px", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
           </div>
         </div>
         <div className="modal-footer">

@@ -63,6 +63,7 @@ const migrateTasks = (tasks) => {
     tags: Array.isArray(t.tags) ? t.tags : [],
     subtasks: Array.isArray(t.subtasks) ? t.subtasks.map(s => ({ ...s, completed: !!s.completed })) : [],
     recurring: t.recurring || "none",
+    color: t.color || "",
     createdAt: t.createdAt || new Date().toISOString(),
     updatedAt: t.updatedAt || new Date().toISOString()
   }));

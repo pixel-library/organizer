@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { contrastText } from "../utils/color";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const CATEGORIES = ["Personal", "Work", "Study", "Health", "Other", "Task", "Meal", "Habit"];
@@ -9,7 +10,7 @@ const categoryColors = {
   Study: "#8b7cff",
   Health: "#22c55e",
   Other: "#eab308",
-  Task: "#c0c0c0",
+  Task: "#5D6E7F",
   Meal: "#f59e0b",
   Habit: "#ec4899"
 };
@@ -339,7 +340,7 @@ export default function CalendarView({
         endTime: t.time || "",
         allDay: false,
         category: t.type || "Task",
-        color: categoryColors[t.type] || categoryColors.Task,
+        color: t.color || categoryColors[t.type] || categoryColors.Task,
         isTask: true,
         completed: t.completed,
         priority: t.priority,
@@ -410,7 +411,7 @@ export default function CalendarView({
       start: t.date,
       startTime: t.time || "",
       category: t.type || "Task",
-      color: categoryColors[t.type] || categoryColors.Task,
+      color: t.color || categoryColors[t.type] || categoryColors.Task,
       isTask: true,
       completed: t.completed,
       priority: t.priority,
@@ -665,8 +666,8 @@ export default function CalendarView({
                 </div>
                 <div className="calendar-day-events">
                   {visible.map(evt => (
-                    <div key={evt.id} className={`calendar-event ${evt.completed ? "completed" : ""} ${evt.isHabit || evt.allDay ? "all-day" : ""}`} style={{ "--evt-color": evt.color || "#999" }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
-                      <span className="calendar-event-dot" style={{ background: evt.color || "#999" }}></span>
+                    <div key={evt.id} className={`calendar-event ${evt.completed ? "completed" : ""} ${evt.isHabit || evt.allDay ? "all-day" : ""}`} style={{ "--evt-color": evt.color || "#5D6E7F" }} onClick={(e) => { e.stopPropagation(); eventClick(evt); }}>
+                      <span className="calendar-event-dot" style={{ background: evt.color || "#5D6E7F" }}></span>
                       {!evt.isHabit && !evt.allDay && <span className="calendar-event-time">{escapeHtml(evt.startTime || "")}</span>}
                       <span className="calendar-event-name">{escapeHtml(evt.title)}</span>
                     </div>
@@ -709,7 +710,8 @@ export default function CalendarView({
           height: `${height}px`,
           left: `${preview ? preview.left : layout.left}%`,
           width: `${preview ? preview.width : layout.width}%`,
-          background: evt.color || "#333"
+          background: evt.color || "#5D6E7F",
+          color: contrastText(evt.color || "#5D6E7F")
         }}
         onMouseDown={(e) => startMove(e, evt, layout)}
         onClick={() => {
@@ -930,7 +932,7 @@ export default function CalendarView({
               <div key={evt.id} className="dash-task-row" style={{ padding: "8px 3px", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
                   <span style={{ width: 50, fontSize: 12, fontWeight: 700, color: "var(--muted)" }}>{evt.allDay || evt.isHabit ? "All day" : escapeHtml(evt.startTime || "")}</span>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: evt.color || "#888", flexShrink: 0 }}></span>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: evt.color || "#5D6E7F", flexShrink: 0 }}></span>
                   <span style={{ flex: 1, fontSize: 13, color: evt.completed ? "var(--muted-2)" : "var(--text)", fontWeight: 600, textDecoration: evt.completed ? "line-through" : "none" }}>{escapeHtml(evt.title)}</span>
                   <span style={{ fontSize: 12, color: "var(--muted-2)" }}>{escapeHtml(evt.category || evt.type)}</span>
                 </div>
@@ -1129,7 +1131,7 @@ export default function CalendarView({
             {selectedEvent ? (
               <>
                 <div className="selected-task-header">
-                  <span className="priority-chip" style={{ background: selectedEvent.color || "#888", color: "#111" }}>{selectedEvent.category || selectedEvent.type}</span>
+                  <span className="priority-chip" style={{ background: selectedEvent.color || "#5D6E7F", color: contrastText(selectedEvent.color || "#5D6E7F") }}>{selectedEvent.category || selectedEvent.type}</span>
                   <button onClick={() => eventDelete(selectedEvent)}><i className="fa-solid fa-trash"></i></button>
                 </div>
                 <h4>{escapeHtml(selectedEvent.title)}</h4>
@@ -1170,7 +1172,7 @@ export default function CalendarView({
               {overflowEvents.length === 0 && <div className="empty-state">No events scheduled.</div>}
               {overflowEvents.map(evt => (
                 <div key={evt.id} className="overflow-event-row" onClick={() => eventClick(evt)}>
-                  <span className="calendar-event-dot" style={{ background: evt.color || "#888" }}></span>
+                  <span className="calendar-event-dot" style={{ background: evt.color || "#5D6E7F" }}></span>
                   <span className="overflow-event-time">{evt.allDay || evt.isHabit ? "All day" : escapeHtml(evt.startTime || "")}</span>
                   <span className="overflow-event-name">{escapeHtml(evt.title)}</span>
                   <button className="task-tool-btn" onClick={(e) => { e.stopPropagation(); eventDelete(evt); }}><i className="fa-solid fa-trash"></i></button>

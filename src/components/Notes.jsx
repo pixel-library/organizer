@@ -93,19 +93,19 @@ export default function Notes({ notes, _onUpdateNote, onDeleteNote, onToggleArch
                   <div>
                     <h4>{escapeHtml(note.title)}</h4>
                     <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "center", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 12, color: "#7a7a7a", background: "#202020", padding: "3px 8px", borderRadius: 4 }}>{note.category}</span>
+                      <span style={{ fontSize: 12, color: "#5D6E7F", background: "#EAF2F7", padding: "3px 8px", borderRadius: 4 }}>{note.category}</span>
                       {Array.isArray(note.tags) && note.tags.map(tag => (
-                        <span key={tag} style={{ fontSize: 11, color: "#8b7cff", background: "rgba(139,124,255,.12)", padding: "3px 8px", borderRadius: 20 }}>
+                        <span key={tag} style={{ fontSize: 11, color: "#910029", background: "rgba(145,0,41,.08)", padding: "3px 8px", borderRadius: 20 }}>
                           #{tag}
                         </span>
                       ))}
-                      {note.pinned && <span style={{ fontSize: 12, color: "#f59e0b" }}><i className="fa-solid fa-thumbtack"></i> Pinned</span>}
-                      {note.archived && <span style={{ fontSize: 12, color: "#8b7cff" }}><i className="fa-solid fa-box-archive"></i> Archived</span>}
+                      {note.pinned && <span style={{ fontSize: 12, color: "#910029" }}><i className="fa-solid fa-thumbtack"></i> Pinned</span>}
+                      {note.archived && <span style={{ fontSize: 12, color: "#6B7486" }}><i className="fa-solid fa-box-archive"></i> Archived</span>}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 4 }}>
                     <button onClick={() => onTogglePin(note.id)} title={note.pinned ? "Unpin" : "Pin"}>
-                      <i className={`fa-solid fa-thumbtack`} style={{ color: note.pinned ? "#f59e0b" : "#666" }}></i>
+                      <i className={`fa-solid fa-thumbtack`} style={{ color: note.pinned ? "#910029" : "#8A94A5" }}></i>
                     </button>
                     <button onClick={() => onEditNote(note.id)} title="Edit"><i className="fa-solid fa-pen"></i></button>
                     <button onClick={() => onScheduleNote(note)} title="Schedule on calendar"><i className="fa-regular fa-calendar-plus"></i></button>
@@ -114,7 +114,7 @@ export default function Notes({ notes, _onUpdateNote, onDeleteNote, onToggleArch
                 </div>
                 <div className="note-content">{escapeHtml(note.content)}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, alignItems: "center" }}>
-                  <span style={{ fontSize: 12, color: "#6b6b6b" }}>Updated {new Date(note.updatedAt).toLocaleDateString()}</span>
+                  <span style={{ fontSize: 12, color: "#7A8494" }}>Updated {new Date(note.updatedAt).toLocaleDateString()}</span>
                   <div style={{ display: "flex", gap: 4 }}>
                     {!note.archived ? (
                       <button onClick={() => { if (confirm("Archive this note?")) onToggleArchive(note.id); }} className="task-tool-btn" style={{ height: 36, fontSize: 12 }}>Archive</button>
