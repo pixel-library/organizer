@@ -8,6 +8,7 @@ export default function Tasks({
 }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [quick, setQuick] = useState("all");
   const [priority, setPriority] = useState("all");
   const [type, setType] = useState("all");
   const [sort, setSort] = useState("dateAsc");
@@ -23,9 +24,14 @@ export default function Tasks({
       const text = `${task.name} ${task.date} ${task.time} ${task.type} ${task.priority} ${task.reminder} ${Array.isArray(task.tags) ? task.tags.join(" ") : task.tags || ""}`.toLowerCase();
       const matchesSearch = !search || text.includes(search.toLowerCase());
       const matchesStatus = status === "all" || (status === "pending" && !task.completed) || (status === "completed" && task.completed) || (status === "overdue" && isTaskOverdue(task));
+      const matchesQuick = quick === "all" ||
+        (quick === "today" && task.date === today) ||
+        (quick === "upcoming" && task.date > today && !task.completed) ||
+        (quick === "overdue" && isTaskOverdue(task) && !task.completed) ||
+        (quick === "done" && task.completed);
       const matchesPriority = priority === "all" || task.priority === priority;
       const matchesType = type === "all" || task.type === type;
-      return matchesSearch && matchesStatus && matchesPriority && matchesType;
+      return matchesSearch && matchesStatus && matchesQuick && matchesPriority && matchesType;
     });
     const priorityRank = { Red: 0, Yellow: 1, Green: 2 };
     list.sort((a, b) => {
@@ -35,13 +41,23 @@ export default function Tasks({
       return sort === "dateDesc" ? -comparison : comparison;
     });
     return list;
-  }, [tasks, search, status, priority, type, sort, isTaskOverdue]);
+  }, [tasks, search, status, quick, priority, type, sort, isTaskOverdue, today]);
 
   const total = tasks.length;
   const completed = tasks.filter(t => t.completed).length;
   const pending = total - completed;
   const high = tasks.filter(t => t.priority === "Red" && !t.completed).length;
   const overdue = tasks.filter(t => isTaskOverdue(t)).length;
+  const todayCount = tasks.filter(t => t.date === today).length;
+  const upcomingCount = tasks.filter(t => t.date > today && !t.completed).length;
+
+  const quickFilters = [
+    { key: "all", label: "All", count: total },
+    { key: "today", label: "Today", count: todayCount },
+    { key: "upcoming", label: "Upcoming", count: upcomingCount },
+    { key: "overdue", label: "Overdue", count: overdue },
+    { key: "done", label: "Done", count: completed }
+  ];
 
   const allSelected = filtered.length > 0 && filtered.every(t => selectedIds.has(t.id));
   const someSelected = filtered.some(t => selectedIds.has(t.id));
@@ -61,6 +77,7 @@ export default function Tasks({
   const clearFilters = () => {
     setSearch("");
     setStatus("all");
+    setQuick("all");
     setPriority("all");
     setType("all");
     setSort("dateAsc");
@@ -195,6 +212,17 @@ export default function Tasks({
       </div>
 
       <div className="task-manager-panel">
+        <div className="task-quick-filters">
+          {quickFilters.map(f => (
+            <button
+              key={f.key}
+              className={`task-quick-chip ${quick === f.key ? "active" : ""}`}
+              onClick={() => setQuick(f.key)}
+            >
+              {f.label} <b>{f.count}</b>
+            </button>
+          ))}
+        </div>
         <div className="task-manager-toolbar">
           <div className="task-manager-search">
             <i className="fa-solid fa-magnifying-glass"></i>

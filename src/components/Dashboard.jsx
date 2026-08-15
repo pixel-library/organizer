@@ -27,6 +27,11 @@ export default function Dashboard({
     return meals.filter(m => m.date === today || m.day === new Date().toLocaleDateString("en-US", { weekday: "long" }));
   }, [meals, today]);
 
+  const remainingTasks = useMemo(() => todayTasks.filter(t => !t.completed).length, [todayTasks]);
+  const remainingEvents = useMemo(() => todayEvents.filter(e => !e.completed).length, [todayEvents]);
+  const remainingMeals = useMemo(() => todayMeals.filter(m => m.status !== "completed" && m.status !== "skipped").length, [todayMeals]);
+  const leftToday = remainingTasks + remainingEvents + remainingMeals;
+
   const nextEvent = useMemo(() => {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -120,6 +125,20 @@ export default function Dashboard({
           </span>
           <strong id="dashboard-time-label">{dashboardTime}</strong>
         </div>
+      </div>
+
+      <div className={`dashboard-focus-banner ${leftToday === 0 ? "all-done" : ""}`}>
+        <div className="focus-banner-icon"><i className="fa-solid fa-bolt"></i></div>
+        <div className="focus-banner-text">
+          <span className="panel-kicker">TODAY</span>
+          <h3>{leftToday === 0 ? "All caught up for today" : `${leftToday} item${leftToday === 1 ? "" : "s"} left today`}</h3>
+          <p>{remainingTasks} task{remainingTasks === 1 ? "" : "s"} · {remainingEvents} event{remainingEvents === 1 ? "" : "s"} · {remainingMeals} meal{remainingMeals === 1 ? "" : "s"}</p>
+        </div>
+        {leftToday > 0 && (
+          <button onClick={() => onSwitchView("tasks")} className="focus-banner-btn">
+            Open tasks <i className="fa-solid fa-arrow-right"></i>
+          </button>
+        )}
       </div>
 
       <div className="dashboard-stat-grid">
