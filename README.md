@@ -23,7 +23,7 @@ Deployed and running at **https://life-organizer-824.netlify.app** — create an
 
 ## About
 
-Life Planner OS is a full-stack, account-based workspace that brings everything you need to stay on top of your life together in one clean, dark-themed interface — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics.
+Life Planner OS is a full-stack, account-based workspace that brings everything you need to stay on top of your life together in one clean, modern interface with full **light and dark themes** — tasks, calendar events, habits, meals, notes, goals, reminders, and analytics.
 
 All user data is stored securely in **PostgreSQL** behind an **Express API**, protected by **session authentication** and strict per-user ownership. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours, synced to your account across sessions and devices.
 
@@ -31,6 +31,7 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 
 ### Dashboard
 - Live statistics: today's task count, project progress, high-priority items, and overall completion rate
+- Today focus banner — what's left today (tasks, events, meals) with a one-click jump to tasks
 - Chronological project timeline with priority-coded dots
 - Today's agenda merging events, meals, and tasks into one view
 - Weekly snapshot, recent notes preview, and a built-in focus audio player
@@ -43,7 +44,7 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 - Sidebar analytics: efficiency, priority distribution, workload, and 7-day activity
 
 ### Task Management
-- List and kanban board views with search, filters (status / priority / type), and sorting
+- List and kanban board views with search, quick filter chips (Today / Upcoming / Overdue / Done), filters (status / priority / type), and sorting
 - Priority levels (High / Medium / Low) with overdue detection
 - Subtasks with progress, tags, descriptions, and estimated time
 - Bulk complete, bulk delete, select-all, and CSV export
@@ -94,7 +95,7 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 | --- | --- |
 | Framework | [React 19](https://react.dev/) |
 | Build tool | [Vite](https://vitejs.dev/) |
-| Styling | Custom CSS with a `data-theme` dark/light system |
+| Styling | Custom CSS design tokens with a `data-theme` light/dark system |
 | Icons | [Font Awesome 6](https://fontawesome.com/) |
 | Typography | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) |
 | Linting | [oxlint](https://oxc.rs/) |
@@ -327,7 +328,7 @@ life-organizer/
 │   │   └── useLifePlanner.js # Core state, persistence & actions
 │   ├── App.jsx              # Root view orchestration
 │   ├── main.jsx             # App entry point
-│   └── index.css            # Global styles + theme system
+│   └── index.css            # Global styles, design tokens + theme system
 ├── tests/                   # Test suites (see Testing)
 ├── scripts/                 # Admin console CLI (admin, admin:init, admin:export, admin:view)
 ├── server/
