@@ -24,11 +24,13 @@ Everything about the **Life Organizer** backend: how it works, how it connects t
 11. [API reference](#11-api-reference)
 12. [The `/api/migrate` legacy importer](#12-the-apimigrate-legacy-importer)
 13. [Stats & analytics module](#13-stats--analytics-module)
-14. [Error handling conventions](#14-error-handling-conventions)
-15. [How the frontend connects](#15-how-the-frontend-connects)
-16. [Deployment (local, Netlify, Neon)](#16-deployment-local-netlify-neon)
-17. [Testing](#17-testing)
-18. [Security notes](#18-security-notes)
+14. [Web push notifications](#14-web-push-notifications)
+15. [Error handling conventions](#15-error-handling-conventions)
+16. [How the frontend connects](#16-how-the-frontend-connects)
+17. [Deployment (local, Netlify, Neon)](#17-deployment-local-netlify-neon)
+18. [Testing](#18-testing)
+19. [Admin console & CLI tools](#19-admin-console--cli-tools)
+20. [Security notes](#20-security-notes)
 
 ---
 
@@ -36,9 +38,10 @@ Everything about the **Life Organizer** backend: how it works, how it connects t
 
 A **REST API** written in Node.js + Express that powers a single-page React app (Life Planner). It provides:
 
-- Account registration / login / logout (email + password, cookie sessions)
+- Account registration / login / logout (**unique username** + password, cookie sessions)
 - Per-user CRUD for **10 data collections**: tasks, notes, calendar events, goals, habits, meals, grocery items, custom reminders, activity log, and a legacy data importer
 - Read-only aggregates for the dashboard and analytics (computed server-side)
+- **Web Push notifications** — VAPID-signed push delivery for due task/event/custom-reminder alerts while the app is closed
 - Health endpoint for uptime/DB checks
 
 Every collection is **scoped to the logged-in user** (`user_id` column + `WHERE user_id = $1` on every query), so no user can read or modify another user's data.
@@ -47,8 +50,9 @@ The same codebase runs two ways:
 
 | Mode | Entry point | How it runs |
 |---|---|---|
-| Local dev / `npm run server` | `server/index.js` | Long-lived Express server on `:4000` |
+| Local dev / `npm run server` | `server/index.js` | Long-lived Express server on `:4000`, in-process push scheduler |
 | Production (Netlify) | `netlify/functions/api.js` | Express app wrapped in `serverless-http`, invoked per request as a Netlify Function |
+| Production push (Netlify) | `netlify/functions/push-scheduler.js` | Cron-triggered (`*/5 * * * *`) function that delivers due reminder pushes |
 
 ---
 
@@ -66,6 +70,7 @@ The same codebase runs two ways:
 | CORS | **cors** | `^2.8.6` | Whitelist of allowed browser origins |
 | Security headers | **helmet** | `^8.3.0` | Sets `X-Frame-Options`, `X-Content-Type-Options`, CSP, etc. |
 | Rate limiting | **express-rate-limit** | `^8.6.2` | Throttles `/api/auth/*` and the rest of the API |
+| Web Push | **web-push** | `^3.7.0` | VAPID signing + sending notifications to browser push services |
 | Env config | **dotenv** | `^17.4.2` | Loads `.env` into `process.env` |
 
 No ORM — all SQL is written by hand with `pg` parameterized queries (`$1`, `$2`, ...), which prevents SQL injection.
@@ -129,14 +134,19 @@ server/
 │   ├── goals.js  habits.js  meals.js
 │   ├── groceryItems.js  customReminders.js  activityLog.js
 │   ├── stats.js                # dashboard + analytics aggregates
-│   └── migrate.js              # one-time legacy localStorage importer
+│   ├── migrate.js              # one-time legacy localStorage importer
+│   ├── admin.js                # web admin API (users/sessions/activity/data/backup)
+│   └── push.js                 # VAPID key + push subscription management
 └── utils/
     ├── AppError.js             # Error subclass carrying statusCode + details
     ├── sessions.js             # cookie options, sha256, create/revoke session, safeUser
-    └── stats.js                # computeDashboard / computeAnalytics (pure functions)
+    ├── stats.js                # computeDashboard / computeAnalytics (pure functions)
+    └── push.js                 # initPush / startPushScheduler / checkDueReminders
 
 netlify/
-└── functions/api.js            # Production entry: serverless(app) + connectDatabase
+└── functions/
+    ├── api.js                  # Production entry: serverless(app) + connectDatabase
+    └── push-scheduler.js       # Cron delivery of due reminders (Netlify only)
 ```
 
 ---
@@ -158,6 +168,8 @@ netlify/
 | `SESSION_TTL_MINUTES` | `10080` (7 days) | Session lifetime + cookie maxAge |
 | `RATE_LIMIT_AUTH_MAX` / `RATE_LIMIT_API_MAX` | `20` / `1000` | Per-15-min request caps |
 | `PG_DATA_DIR` / `PG_SUPERUSER` / `PG_SUPERUSER_PASSWORD` | `.pgdata` / `postgres` | Embedded Postgres bootstrap |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | — | Web Push VAPID keypair (required for push; `npx web-push generate-vapid-keys`) |
+| `VAPID_SUBJECT` | `mailto:admin@lifeplanner.local` | `mailto:` contact used as the push sender |
 
 ### Hard requirements
 
@@ -208,16 +220,20 @@ npm run server      # starts the API against it
 `node-pg-migrate` versioned migrations live in `server/db/migrations/`. Each file exports `up(pgm)` / `down(pgm)`. Applied migrations are recorded in the `pgmigrations` table, so re-running `npm run db:migrate` is a **no-op** on already-applied ones (this is what makes repeat Netlify deploys safe).
 
 | Migration | What it does |
-|---|---|
+|---|---|---|
 | `20260814160000_init-schema` | Creates `users`, `tasks`, `notes`, `calendar_events`, `goals`, `habits`, `meals`, `grocery_items`, `custom_reminders`, `activity_log`, `settings` + indexes, FKs (`user_id → users`, `ON DELETE CASCADE`), constraints |
 | `20260814170000_add-sessions` | Creates `sessions` (token_hash, user_id FK, expires_at, revoked_at) |
 | `20260814180000_add-user-data-columns` | Adds `goals.unit` and `grocery_items.unit` |
 | `20260815100000_add-task-color` | Adds `tasks.color` (text) for the per-task color palette |
+| `20260816200000_add-user-role` | Adds `users.role` (`user`/`admin` check constraint) for the web admin panel |
+| `20260816210000_add-username` | Replaces email as the login identity with a unique `username` (backfills existing users; email column retained, nullable) |
+| `20260817000000_add-push-subscriptions` | Creates `push_subscriptions` (endpoint unique, p256dh/auth, per-user tz offset, user_agent) |
 
 **Schema snapshot** (all data tables carry `user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE`):
 
-- `users` — id, name, email (unique, case-insensitive index), password_hash, created_at, updated_at
+- `users` — name, **username** (unique, case-insensitive index), role (`user`/`admin`), email (legacy, nullable, unused), password_hash, created_at, updated_at
 - `sessions` — id, token_hash (unique), user_id, created_at, last_seen_at, expires_at, revoked_at
+- `push_subscriptions` — id, user_id (FK CASCADE), endpoint (unique), p256dh, auth, tz_offset_minutes, user_agent, created_at, updated_at
 - `tasks` — name, date, time, priority (`Red/Yellow/Green` check), reminder, completed, type, description, start_date, estimated_time, tags `text[]`, subtasks `jsonb`, recurring, **color**, timestamps
 - `notes` — title, content, category, pinned, archived, tags `text[]`
 - `calendar_events` — title, start_date (required), end_date, start_time, end_time, all_day, category, location, description, reminder, recurrence, recurrence_end, custom_weekdays `integer[]`, overrides `jsonb`
@@ -273,7 +289,7 @@ Everything lives in `server/routes/auth.js` (endpoints) + `server/utils/sessions
 
 ### Registration / login flow
 
-1. Validate (name ≤100, valid email, password 8–72 chars).
+1. Validate (name ≤100, username matching `^[a-z0-9][a-z0-9_-]{2,29}$` case-insensitively, password 8–72 chars). No email is collected anymore.
 2. `bcrypt.hash(password, 10)` → store hash; **plaintext never stored**.
 3. `createSession(userId)`:
    - generates `crypto.randomBytes(32).toString("hex")` as the opaque token
@@ -342,7 +358,7 @@ Base prefix `/api`. All routes except `health`/`auth` require a session cookie.
 |---|---|---|---|
 | GET | `/` | — | Service banner `{ service, status }` |
 | GET | `/health` | — | `status`, `uptime`, `db: { configured, connected, provider }` |
-| POST | `/auth/register` | — | Create account → sets session cookie (201) |
+| POST | `/auth/register` | — | Create account (name + unique username) → sets session cookie (201) |
 | POST | `/auth/login` | — | Verify password → sets session cookie (200) |
 | POST | `/auth/logout` | — | Delete session, clear cookie (204) |
 | GET | `/auth/me` | ✅ | Current user |
@@ -363,6 +379,31 @@ Base prefix `/api`. All routes except `health`/`auth` require a session cookie.
 | Activity log | `/activityLog` | GET / POST / DELETE(:id) / DELETE(all) | `name`, `status`, `timestamp` |
 | Stats | `/stats` | GET | Dashboard + analytics aggregates (see §13) |
 | Migrate | `/migrate` | POST | Legacy localStorage import (see §12) |
+
+### Web push (all `requireAuth`)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/push/vapid-public-key` | Returns the configured VAPID public key (503 if push is not configured) |
+| GET | `/push/subscriptions` | List this user's stored push subscriptions |
+| POST | `/push/subscribe` | Validate + upsert a subscription `{ subscription: { endpoint, keys: { p256dh, auth } }, tzOffsetMinutes, userAgent }` (201, idempotent per endpoint) |
+| DELETE | `/push/subscribe?endpoint=` | Delete a subscription (204) |
+
+### Admin API (requires `role = "admin"` + session cookie, stricter rate limit)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/admin/stats` | Users/sessions/tables/database overview |
+| GET | `/admin/users` | List with `?search=&sort=&page=&perPage=` |
+| PATCH | `/admin/users/:id/role` | Promote/demote (`user` ↔ `admin`; self-demotion blocked) |
+| DELETE | `/admin/users/:id` | Delete a user (self-deletion blocked; cascades their data) |
+| GET | `/admin/sessions` | All sessions, paginated |
+| POST | `/admin/sessions/:id/revoke` | Force-logout a session |
+| GET | `/admin/activity` | Activity log across users (`?search=`) |
+| GET | `/admin/data/:table` | Table browser (`?search=&filter=&sort=&dir=&page=&perPage=`) |
+| GET | `/admin/export` | Plain JSON dump of every table |
+| POST | `/admin/backup` | Encrypted `.lzb` backup (`{ passphrase }`) |
+| POST | `/admin/restore` | Restore from JSON dump or encrypted backup |
 
 `calendarEvents` requires `title` + `start` on create; `tasks` requires `name`; `goals`/`habits` require `name`; reminders require `title`; activity log requires `name`. Everything else is optional with safe defaults.
 
@@ -398,7 +439,35 @@ All date math uses local `YYYY-MM-DD` keys; habits compute streaks by diffing co
 
 ---
 
-## 14. Error handling conventions
+## 14. Web push notifications
+
+Reminder alerts (task/event/custom-reminder) are delivered as **Service Worker push notifications** so they arrive even when the app is closed. Built on `web-push` + VAPID.
+
+### Flow
+
+1. **Frontend** (`src/utils/push.js`): Settings → "Enable push alerts" requests `Notification` permission, fetches the VAPID public key from `GET /api/push/vapid-public-key`, calls `registration.pushManager.subscribe({ userVisibleOnly, applicationServerKey })`, and POSTs `subscription.toJSON()` plus the browser's `tzOffsetMinutes` to `/api/push/subscribe`.
+2. **Delivery** (`server/utils/push.js`):
+   - `startPushScheduler()` (called from `server/index.js`) ticks `checkDueReminders()` every 60 s in-process — on a **self-hosted/Node server**.
+   - On **Netlify** (serverless, no long-lived timers) the same `checkDueReminders()` runs in `netlify/functions/push-scheduler.js`, cron `*/5 * * * *` (declared via the function's `schedule` export). It calls `initPush()` + `connectDatabase()` per invocation.
+3. **Payload**: `{ title, body, tag, url: "/" }` — the service worker (`src/sw.js`, injected via vite-plugin-pwa `injectManifest`) shows it via `showNotification` and opens `/` on `notificationclick`.
+
+### Due-reminder semantics
+
+- **Tasks**: `reminder` = `exact | 10min | 30min | 1hour` → fire time = `date+time − offset`.
+- **Events**: `reminder` = `5min … 1hour | 1day` → fire time = `start_date+start_time − offset`. All-day events are skipped (no time to anchor).
+- **Custom reminders**: fire at their stored `date+time` (all types, once per occurrence).
+- **Window**: an occurrence fires when `now` is between 2 min before and 5 min after the fire time, so a 5-minute Netlify cron never misses; completed items never fire.
+- **Timezone**: each subscription stores the browser's `tz_offset_minutes`; the scheduler shifts the server's wall-clock into the user's local time before comparing dates/times, so results are correct no matter where the server runs.
+- **Dedup**: an in-memory `lastSent` map keyed `userId:kind:id:date:fireMinutes` fires each occurrence exactly once (edits/reschedules change the key and re-arm). In-memory only — a restart may re-send one notification for a still-due occurrence, which is acceptable.
+- **Dead subscriptions**: push services answer `404/410` for stale subscriptions; the scheduler deletes them (`push_subscriptions` row) instead of retrying.
+
+### VAPID keys
+
+Generate once: `npx web-push generate-vapid-keys`. Set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` in `.env` (or Netlify env vars). Without keys the scheduler logs once and stays disabled, and the key endpoint returns 503.
+
+---
+
+## 15. Error handling conventions
 
 - **AppError** (`server/utils/AppError.js`) — `new AppError(message, statusCode, details?)`. Thrown by validators/routes for predictable 4xx responses.
 - **errorHandler** maps:
@@ -411,16 +480,18 @@ All date math uses local `YYYY-MM-DD` keys; habits compute streaks by diffing co
 
 ---
 
-## 15. How the frontend connects
+## 16. How the frontend connects
 
 - **`src/api.js`** — single fetch wrapper. `API_BASE` resolves in priority order: global override → `import.meta.env.VITE_API_URL` → `/api`. Every call uses `credentials: "include"` (sends the httpOnly cookie) and `content-type: application/json`. Non-2xx throws `ApiError` with the server's `error.message`.
 - **`src/hooks/useLifePlanner.js`** — the React data layer; loads all collections on login (`Promise.all` of `api.get(...)`), exposes `addOrUpdateX`, `deleteX`, `toggleX` helpers that call the API then update local state. It also runs `migrateTasks`/`migrateEvents` normalizers (e.g. defaulting new fields like `color`) so old cached data still renders.
+- **`src/utils/push.js`** — push subscribe/unsubscribe helpers (VAPID key fetch, `pushManager.subscribe`, server registration). Wired into `SettingsView.jsx` ("Enable push alerts" toggle).
+- **`src/sw.js`** — custom service worker (vite-plugin-pwa `injectManifest`): Workbox precache of the app shell + `push`/`notificationclick` handlers.
 - **Dev proxy** — `vite.config.js` forwards `/api` → `http://localhost:4000` (override with `VITE_PROXY_TARGET`).
 - **Prod** — `VITE_API_URL=/.netlify/functions/api` baked at build time.
 
 ---
 
-## 16. Deployment (local, Netlify, Neon)
+## 17. Deployment (local, Netlify, Neon)
 
 ### Local development
 
@@ -458,7 +529,8 @@ npm run dev           # 4) Vite dev server + proxy on http://localhost:5173
 
 - The build runs migrations first (idempotent), then builds the SPA.
 - `netlify/functions/api.js` reuses `createApp()` from `server/app.js`, calls `connectDatabase()` (lazily, memoized across invocations), and normalizes the function path so Express sees `/api/...`.
-- Site env vars (set in the Netlify dashboard): `DATABASE_URL` (Neon `postgresql://...neon.tech/neondb?sslmode=require`), `CORS_ORIGINS` (the deployed site URL), plus `NODE_ENV`/`VITE_API_URL` baked by the build.
+- `netlify/functions/push-scheduler.js` is the cron delivery function (`*/5 * * * *`) — see §14.
+- Site env vars (set in the Netlify dashboard): `DATABASE_URL` (Neon `postgresql://...neon.tech/neondb?sslmode=require`), `CORS_ORIGINS` (the deployed site URL), and the three `VAPID_*` vars (§14); `NODE_ENV`/`VITE_API_URL` are baked by the build.
 - Deploy via the dashboard (connected repo) or CLI:
 
 ```bash
@@ -469,11 +541,11 @@ npx netlify-cli deploy --prod --build
 
 ### Important deploy note
 
-The site is **not linked to a GitHub repo** (confirmed via the Netlify API: `repo_url: null`). Pushing to GitHub does **not** auto-deploy; production deploys must be triggered from the Netlify dashboard ("Deploy site") or with the CLI command above. The latest migration (`add-task-color`) was applied to Neon directly during the last deploy.
+The site is **not connected to auto-deploy via a GitHub repo** (confirmed via the Netlify API: `repo_url: null`). Pushing to GitHub does **not** auto-deploy; production deploys must be triggered from the Netlify dashboard ("Deploy site") or with the CLI command above. The latest deploys were pushed with `npx netlify-cli deploy --prod --dir=dist` (after running `npm run db:migrate` against Neon manually) — the UI polish, PWA service worker, and the `push_subscriptions` migration are all live.
 
 ---
 
-## 17. Testing
+## 18. Testing
 
 Tests live in `tests/` and run against a real DB (the same embedded PostgreSQL), using the actual HTTP API via `createApp()` + `app.listen(0)`:
 
@@ -492,6 +564,8 @@ npm run test:admin       # admin console: auth + dynamic table list
 npm run test:admin:browse # admin console: browse/search/filter/sort/breakdown
 npm run test:admin:sql   # admin console: read-only SQL mode
 npm run test:admin:backup # admin console: encrypted backup export/view
+npm run test:admin:api   # admin REST API suite (users/sessions/activity/data/backup/restore)
+npm run test:push        # web push API suite (VAPID key, subscribe/unsubscribe)
 ```
 
 Notes:
@@ -503,9 +577,9 @@ Notes:
 
 ---
 
-## 18. Admin console & CLI tools
+## 19. Admin console & CLI tools
 
-A terminal-only admin console (`scripts/`) for inspecting the database directly — never part of the web app or the deployed site.
+Full user guide in **[ADMIN.md](ADMIN.md)**. A terminal-only admin console (`scripts/`) for inspecting the database directly — never part of the web app or the deployed site. In addition, users with `role = "admin"` get the **web admin panel** (in-app Admin tab, backed by the `/api/admin/*` routes in §11).
 
 - **`scripts/admin-utils.js`** — shared helpers: hidden prompt queue (TTY + piped stdin), credential storage (`~/.config/life-organizer/admin.json`, mode `600`), `authenticate()`, DB connect + read-only enforcement, dynamic table/column introspection, `runBrowseQuery()` (whitelisted identifiers + 100% parameterized), `renderTable()`.
 - **`scripts/admin-init.js`** — `npm run admin:init`: create the bcrypt-hashed (cost 12) admin username/password. Refuses to overwrite an existing account.
@@ -518,7 +592,7 @@ Passphrases are prompted hidden, or via `--pass` / `ADMIN_BACKUP_PASS`. Credenti
 
 ---
 
-## 19. Security notes
+## 20. Security notes
 
 - **SQL injection**: 100% parameterized queries (`$n` placeholders); dynamic `ORDER BY`/column names come from internal whitelists, never user input.
 - **Passwords**: bcryptjs, cost 10, never returned by any endpoint (`safeUser` strips `password_hash`).
@@ -526,6 +600,7 @@ Passphrases are prompted hidden, or via `--pass` / `ADMIN_BACKUP_PASS`. Credenti
 - **Ownership**: every query filters by `user_id = req.user.id`; `fetchOwned` ensures 404 (not 403) so record existence isn't leaked across users.
 - **Brute force**: `authLimiter` (20/15 min) on `/api/auth/*`, `apiLimiter` (1000/15 min) elsewhere.
 - **Headers**: helmet defaults; `x-powered-by` disabled; CORS strictly allow-listed with credentials.
-- **Secrets**: never commit `.env`; in prod, secrets come from Netlify env vars (never in the repo or bundle).
+- **Secrets**: never commit `.env`; in prod, secrets come from Netlify env vars (never in the repo or bundle). The VAPID **private** key is server-side only — the API exposes only the public key.
 - **Body size**: 1 MB JSON cap.
+- **Web push**: subscriptions are stored per-user with the endpoint URL (sensitive — treat as a capability to send notifications); stale/revoked subscriptions are pruned on `404/410` from push services; subscribe/unsubscribe are authenticated and validated.
 - **Admin console**: local-only CLI, never in the web app; credentials bcrypt-hashed (cost 12) in a mode-600 file; sessions run in a PostgreSQL read-only transaction by default; backups are AES-256-GCM encrypted with a scrypt-derived key.

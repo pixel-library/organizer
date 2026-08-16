@@ -27,6 +27,13 @@ Life Planner OS is a full-stack, account-based workspace that brings everything 
 
 All user data is stored securely in **PostgreSQL** behind an **Express API**, protected by **session authentication** and strict per-user ownership. The app ships with **no fake or sample data** — you start from a clean workspace and everything you create is genuinely yours, synced to your account across sessions and devices.
 
+## Documentation
+
+| Doc | What it covers |
+| --- | --- |
+| [BACKEND.md](BACKEND.md) | Backend architecture: request lifecycle, auth, routes, schema, web push, deployment |
+| [ADMIN.md](ADMIN.md) | Complete admin guide: terminal console, web admin panel, backups, recipes |
+
 ## Features
 
 ### Dashboard
@@ -71,7 +78,8 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 
 ### Reminders
 - Everything scheduled to remind you in one place — task alerts, event alerts, and custom reminders
-- Toggle reminders complete or delete them, with browser notification polling
+- Toggle reminders complete or delete them, with in-app browser notifications
+- **Service Worker push notifications** — reminders arrive even when the app is closed (via VAPID web push, see BACKEND.md)
 
 ### Analytics
 - Task completion rate, overdue load, habit consistency, and best streak
@@ -89,10 +97,11 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 - **Import / Export** data as a JSON backup — merge with existing data or replace everything
 - **Themes**: dark, light, and system-following with a one-click cycle
 - **Recurring tasks** — mark a daily/weekly/monthly task done and it rolls itself to the next occurrence
-- **PWA**: installable, with an offline service worker, offline banner, and browser notifications for task reminders
+- **PWA**: installable, with an offline service worker, offline banner, in-app browser notifications, and push notifications for reminders even when the app is closed
 
 ### Settings
-- Profile overview, appearance (theme), and browser notification permission
+- Profile overview, appearance (theme), and notification preferences
+- **Push alerts** toggle — enable Web Push so reminders arrive when the app is closed
 - Change password (signs out other devices) and revoke all other sessions
 - Export / import your data, and a confirmed account deletion
 
@@ -115,7 +124,7 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 | Typography | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) |
 | Linting | [oxlint](https://oxc.rs/) |
 | Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR + Node test runner |
-| PWA | [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) (Workbox) — installable + offline |
+| PWA | [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) (Workbox, `injectManifest` + custom `src/sw.js`) — installable + offline + push |
 | API | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) + [cookie-parser](https://github.com/expressjs/cookie-parser) + [express-rate-limit](https://express-rate-limit.mintlify.app/) |
 | Database | [PostgreSQL](https://www.postgresql.org/) + [node-pg-migrate](https://salsita.github.io/node-pg-migrate/) + [embedded-postgres](https://github.com/leinelissen/embedded-postgres) (dev) |
 
@@ -198,6 +207,12 @@ GET/POST /api/groceryItems        # grocery list
 GET/PUT/PATCH/DELETE /api/groceryItems/:id
 GET/POST /api/customReminders     # custom reminders
 GET/PUT/PATCH/DELETE /api/customReminders/:id
+
+GET  /api/push/vapid-public-key  # Web Push VAPID public key (for subscribing)
+GET  /api/push/subscriptions     # this user's push subscriptions
+POST /api/push/subscribe         # register a push subscription (idempotent)
+DELETE /api/push/subscribe       # remove a subscription (?endpoint=)
+
 GET/POST /api/activityLog         # activity log
 DELETE /api/activityLog/:id
 GET  /api/stats                   # dashboard + analytics metrics
@@ -226,6 +241,8 @@ Notes:
 - **POST /api/migrate** imports legacy `localStorage` data in one transaction, mapping old field names to the database schema, and clears the local keys afterwards.
 
 ## Admin Console
+
+Full documentation in **[ADMIN.md](ADMIN.md)**. Quick start:
 
 A terminal-only admin console for inspecting the database directly. It is **never** part of the web app or the deployed site — you run it locally, and it speaks straight to PostgreSQL (your `DATABASE_URL`, or the local dev DB).
 
@@ -282,6 +299,7 @@ npm run test:admin:browse # admin console: browse/search/filter/sort/breakdown
 npm run test:admin:sql  # admin console: read-only SQL mode
 npm run test:admin:backup # admin console: encrypted backup export/view
 npm run test:admin:api  # admin REST API suite (users/sessions/activity/data/backup/restore)
+npm run test:push       # web push API suite (VAPID key, subscribe/unsubscribe)
 ```
 
 The API suites need a running database (`npm run db:start` + `npm run db:migrate`). The schema is created without any seed data — all tables start empty.
@@ -348,6 +366,8 @@ Notes:
 
 ```
 life-organizer/
+├── ADMIN.md                 # Admin guide (terminal console + web panel)
+├── BACKEND.md               # Backend architecture reference
 ├── public/                  # Static assets (favicon, icons)
 ├── src/
 │   ├── components/          # UI components
@@ -374,12 +394,14 @@ life-organizer/
 │   ├── hooks/
 │   │   └── useLifePlanner.js # Core state, persistence & actions
 │   ├── App.jsx              # Root view orchestration
+│   ├── sw.js                # Custom service worker (offline precache + push handlers)
 │   ├── main.jsx             # App entry point
+│   ├── utils/push.js        # Push subscribe/unsubscribe helpers
 │   └── index.css            # Global styles, design tokens + theme system
 ├── tests/                   # Test suites (see Testing)
 ├── scripts/                 # Admin console CLI (admin, admin:init, admin:export, admin:view)
 ├── server/
-│   ├── index.js             # Server entry point + graceful shutdown
+│   ├── index.js             # Server entry point + graceful shutdown + push scheduler
 │   ├── app.js               # Express app assembly (middleware, routes, errors)
 │   ├── config.js            # Environment configuration
 │   ├── db.js                # PostgreSQL connection pool + status
@@ -387,11 +409,12 @@ life-organizer/
 │   │   ├── embedded.js      # Local user-space PostgreSQL server (dev)
 │   │   └── migrations/      # node-pg-migrate schema migrations
 │   ├── middleware/          # Request logger, auth guard, error handling
-│   ├── routes/              # health + auth endpoints
-│   └── utils/               # AppError + session helpers
+│   ├── routes/              # health + auth + resource + admin + push endpoints
+│   └── utils/               # AppError, sessions, stats + push scheduler
 ├── index.html               # HTML shell
 ├── netlify.toml             # Netlify build/function/redirect config
 ├── netlify/functions/api.js # Express API as a Netlify Function
+├── netlify/functions/push-scheduler.js # Cron-triggered reminder push delivery (Netlify)
 ├── vite.config.js           # Vite configuration
 └── package.json
 ```
@@ -423,4 +446,4 @@ Contributions are welcome! If you find a bug or have a feature idea:
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See `LICENSE.md` for more information.
