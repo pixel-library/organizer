@@ -24,6 +24,7 @@
     "test:stats": "node tests/stats.test.mjs",
     "test:collections": "node tests/collections.test.mjs",
     "test:security": "node tests/security.test.mjs",
+    "test:push": "node tests/push.test.mjs",
     "test:complete": "node tests/complete.test.mjs",
     "test:admin": "node tests/admin.test.mjs",
     "test:admin:api": "node tests/admin-api.test.mjs",
@@ -49,7 +50,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
-    "serverless-http": "^4.0.0"
+    "serverless-http": "^4.0.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api, ApiError } from "../api";
+import { isPushSupported, subscribeToPush, unsubscribeFromPush, getExistingPushSubscription } from "../utils/push";
 
 function SettingsCard({ title, icon, kicker, children }) {
   return (
@@ -66,14 +67,66 @@ export default function SettingsView({ user, settings, setSettings, onExport, on
     if (ok) onLogout();
   };
 
+  const [notifStatus, setNotifStatus] = useState(null);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!isPushSupported()) return;
+      try {
+        const sub = await getExistingPushSubscription();
+        if (!cancelled) setPushEnabled(Boolean(sub));
+      } catch {
+        /* SW not ready yet */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const notifSupported = typeof Notification !== "undefined";
   const notifEnabled = notifSupported && Notification.permission === "granted";
 
   const enableNotifications = async () => {
     try {
-      await Notification.requestPermission();
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setNotifStatus({ kind: "error", text: "Notification permission was denied." });
+        return;
+      }
     } catch {
       /* permission request unsupported */
+    }
+  };
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    setNotifStatus(null);
+    try {
+      if (pushEnabled) {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+        setNotifStatus({ kind: "ok", text: "Push notifications disabled." });
+      } else {
+        if (notifSupported && Notification.permission !== "granted") {
+          const perm = await Notification.requestPermission();
+          if (perm !== "granted") {
+            setNotifStatus({ kind: "error", text: "Notification permission is required for push." });
+            return;
+          }
+        }
+        await subscribeToPush();
+        setPushEnabled(true);
+        setNotifStatus({ kind: "ok", text: "Push notifications enabled. Reminders will arrive even when the app is closed." });
+      }
+    } catch (err) {
+      setNotifStatus({
+        kind: "error",
+        text: err instanceof ApiError ? err.message : "Push setup failed (HTTPS is required)."
+      });
+    } finally {
+      setPushBusy(false);
     }
   };
 
@@ -120,6 +173,22 @@ export default function SettingsView({ user, settings, setSettings, onExport, on
               )}
             </div>
           )}
+          {isPushSupported() && (
+            <div className="admin-row">
+              <span className="admin-label">Push alerts</span>
+              <button
+                type="button"
+                className="task-tool-btn"
+                onClick={togglePush}
+                disabled={pushBusy}
+              >
+                <i className={`fa-solid ${pushEnabled ? "fa-bell-slash" : "fa-bell"}`}></i>{" "}
+                {pushBusy ? "Working…" : pushEnabled ? "Disable push alerts" : "Enable push alerts"}
+              </button>
+              <span className="admin-status">{pushEnabled ? "Active" : "Off"}</span>
+            </div>
+          )}
+          <StatusNote status={notifStatus} />
         </SettingsCard>
 
         <SettingsCard title="Change password" icon="fa-solid fa-key" kicker="SECURITY">

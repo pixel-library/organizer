@@ -406,7 +406,7 @@ If you had existing `localStorage` data, it is migrated into your account once o
 - [x] In-app reminder notifications (browser Notification API while the app is open)
 - [x] Admin panel (web) for user/session/data management and encrypted backups
 - [x] Recurring tasks with automatic rollover on completion
-- [ ] Service Worker push notifications for reminders while the app is closed
+- [x] Service Worker push notifications for reminders while the app is closed
 
 ## Contributing
 

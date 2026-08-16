@@ -36,6 +36,11 @@ export const config = {
   apiPrefix: process.env.API_PREFIX || "/api",
   sessionTtlMinutes: Number(process.env.SESSION_TTL_MINUTES) || 10080,
   corsOrigins: normalizeCorsOrigins(process.env.CORS_ORIGINS),
+  vapid: {
+    publicKey: process.env.VAPID_PUBLIC_KEY || "",
+    privateKey: process.env.VAPID_PRIVATE_KEY || "",
+    subject: process.env.VAPID_SUBJECT || "mailto:admin@lifeplanner.local"
+  },
   db: {
     url: buildDatabaseUrl(),
     host: process.env.DB_HOST || "localhost",

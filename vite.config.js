@@ -31,10 +31,16 @@ export default defineConfig({
           { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
-      workbox: {
-        navigateFallbackDenylist: [/^\/api\//],
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico}'],
-        cleanupOutdatedCaches: true
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      injectRegister: 'auto',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico}']
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],

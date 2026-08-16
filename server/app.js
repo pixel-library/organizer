@@ -22,6 +22,7 @@ import habitsRouter from "./routes/habits.js";
 import mealsRouter from "./routes/meals.js";
 import groceryItemsRouter from "./routes/groceryItems.js";
 import customRemindersRouter from "./routes/customReminders.js";
+import pushRouter from "./routes/push.js";
 import activityLogRouter from "./routes/activityLog.js";
 import migrateRouter from "./routes/migrate.js";
 
@@ -59,6 +60,7 @@ export function createApp() {
   app.use(`${config.apiPrefix}/meals`, mealsRouter);
   app.use(`${config.apiPrefix}/groceryItems`, groceryItemsRouter);
   app.use(`${config.apiPrefix}/customReminders`, customRemindersRouter);
+  app.use(`${config.apiPrefix}/push`, pushRouter);
   app.use(`${config.apiPrefix}/activityLog`, activityLogRouter);
   app.use(`${config.apiPrefix}/migrate`, migrateRouter);
 

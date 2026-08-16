@@ -2,6 +2,7 @@ import { createApp } from "./app.js";
 import { config } from "./config.js";
 import { connectDatabase, disconnectDatabase } from "./db.js";
 import { purgeExpiredSessions } from "./utils/sessions.js";
+import { startPushScheduler, stopPushScheduler } from "./utils/push.js";
 
 const app = createApp();
 
@@ -17,9 +18,12 @@ const sessionPurgeTimer = setInterval(() => {
 }, 60 * 60 * 1000);
 sessionPurgeTimer.unref();
 
+startPushScheduler();
+
 function shutdown(signal) {
   console.log(`[life-organizer-api] received ${signal}, shutting down`);
   clearInterval(sessionPurgeTimer);
+  stopPushScheduler();
   server.close(async () => {
     await disconnectDatabase();
     process.exit(0);
