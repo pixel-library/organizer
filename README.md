@@ -325,6 +325,9 @@ git push -u origin main
 | --- | --- |
 | `DATABASE_URL` | your Neon connection string (with `sslmode=require`) |
 | `CORS_ORIGINS` | `https://<your-site>.netlify.app` (the deployed site URL) |
+| `VAPID_PUBLIC_KEY` | Web Push public key (`npx web-push generate-vapid-keys`) |
+| `VAPID_PRIVATE_KEY` | Web Push private key (keep secret) |
+| `VAPID_SUBJECT` | `mailto:` contact, e.g. `mailto:you@example.com` |
 
 `NODE_ENV=production` and `VITE_API_URL=/.netlify/functions/api` are set in `netlify.toml`. If `CORS_ORIGINS` or `DATABASE_URL` are missing, the server refuses to start on purpose.
 
@@ -339,6 +342,7 @@ Notes:
 - The SPA rewrite (`/*` → `/index.html`) lets the app use client-side routing; `/.netlify/functions/*` is handled by Netlify's function router before the rewrite.
 - Migrations run on every build; they are idempotent, so repeat deploys are safe. To run them manually, `DATABASE_URL=<neon-url> npm run db:migrate`.
 - The API lives at `/.netlify/functions/api/...` (frontend is pre-configured via `VITE_API_URL`). For local development nothing changes — Vite still proxies `/api` to `localhost:4000`.
+- **Push notifications on Netlify:** serverless functions cannot keep a timer alive, so reminder pushes are sent by the scheduled function `netlify/functions/push-scheduler.js` (every 5 minutes — the cron is declared in the function via its `schedule` export). On a self-hosted/Node server the same work is done in-process by `server/index.js` (`startPushScheduler`). The three `VAPID_*` variables above are required in both setups.
 
 ## Project Structure
 
