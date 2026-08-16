@@ -34,8 +34,8 @@ try {
 
   const email = `browsetest-${Date.now()}@example.com`;
   const user = await runSql(
-    `INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
-    ["Browse Test User", email, "$2b$10$testhash123456789012345678901234567890123456789012"]
+    `INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
+    ["Browse Test User", `browse-${Date.now()}`, email, "$2b$10$testhash123456789012345678901234567890123456789012"]
   );
   userId = user.rows[0].id;
 

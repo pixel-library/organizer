@@ -1,3 +1,5 @@
+import InstallButton from "./InstallButton";
+
 export default function Sidebar({ currentView, onSwitchView, historyCount, user, onLogout, mobileOpen = false, onMobileNavigate }) {
   const initials = (user?.name || "LP")
     .split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
@@ -16,8 +18,12 @@ export default function Sidebar({ currentView, onSwitchView, historyCount, user,
     { id: "habits", icon: "fa-solid fa-bolt", label: "Habit Tracker" },
     { id: "reminders", icon: "fa-regular fa-bell", label: "Reminders" },
     { id: "meals", icon: "fa-solid fa-utensils", label: "Meal Planner" },
-    { id: "history", icon: "fa-solid fa-clock-rotate-left", label: "History" }
+    { id: "history", icon: "fa-solid fa-clock-rotate-left", label: "History" },
+    { id: "settings", icon: "fa-solid fa-gear", label: "Settings" }
   ];
+  if (user?.role === "admin") {
+    navItems.push({ id: "admin", icon: "fa-solid fa-shield-halved", label: "Admin Panel" });
+  }
 
   const go = (id) => {
     onSwitchView(id);
@@ -56,6 +62,7 @@ export default function Sidebar({ currentView, onSwitchView, historyCount, user,
         </nav>
       </div>
       <div className="sidebar-bottom">
+        <InstallButton />
         <div className="reminder-status">
           <div className="reminder-icon">
             <i className="fa-regular fa-bell"></i>
@@ -72,7 +79,7 @@ export default function Sidebar({ currentView, onSwitchView, historyCount, user,
           <div className="profile-avatar">{initials}</div>
           <div>
             <strong>{user?.name || "Life Planner"}</strong>
-            <span>{user?.email || "Personal workspace"}</span>
+            <span>{user?.username ? `@${user.username}` : "Personal workspace"}</span>
           </div>
           <button className="profile-logout" onClick={logout} title="Sign out" aria-label="Sign out">
             <i className="fa-solid fa-arrow-right-from-bracket"></i>

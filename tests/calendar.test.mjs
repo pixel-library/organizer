@@ -23,11 +23,11 @@ let base;
 async function main() {
   await connectDatabase();
   const suffix = Date.now();
-  const emailA = `cal-a-${suffix}@test.dev`;
-  const emailB = `cal-b-${suffix}@test.dev`;
+  const usernameA = `cal-a-${suffix}`;
+  const usernameB = `cal-b-${suffix}`;
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["cal-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["cal-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -45,13 +45,13 @@ async function main() {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
     });
 
-  const register = async (name, email) => {
-    const res = await call("POST", "/auth/register", { name, email, password });
+  const register = async (name, username) => {
+    const res = await call("POST", "/auth/register", { name, username, password });
     return { res, cookie: cookieFrom(res), body: await res.json() };
   };
 
-  const userA = await register("Cal Alice", emailA);
-  const userB = await register("Cal Bob", emailB);
+  const userA = await register("Cal Alice", usernameA);
+  const userB = await register("Cal Bob", usernameB);
   assert("register User A → 201", userA.res.status === 201);
   assert("register User B → 201", userB.res.status === 201);
 
@@ -133,7 +133,7 @@ async function main() {
 
   // Logout/login persistence
   await call("POST", "/auth/logout", {}, userA.cookie);
-  const relogin = await call("POST", "/auth/login", { email: emailA, password }, undefined);
+  const relogin = await call("POST", "/auth/login", { username: usernameA, password }, undefined);
   assert("relogin → 200", relogin.status === 200);
   const cookie2 = cookieFrom(relogin);
   const afterLogin = await call("GET", "/calendarEvents", undefined, cookie2);
@@ -182,7 +182,7 @@ async function main() {
   assert("event gone after delete → 404", gone.status === 404, String(gone.status));
 
   // Cleanup
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["cal-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["cal-%"]);
   const leftoverEvents = await getPool().query("SELECT count(*)::int AS n FROM calendar_events");
   assert("no leftover test events", leftoverEvents.rows[0].n === 0, `${leftoverEvents.rows[0].n} rows`);
 

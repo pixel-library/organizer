@@ -316,6 +316,11 @@ export default function Tasks({
                         <div className="task-name-sub">
                           {isOverdue ? "OVERDUE" : escapeHtml(task.type)}
                           {task.estimatedTime ? ` · ${escapeHtml(task.estimatedTime)}` : ""}
+                          {task.recurring && task.recurring !== "none" ? (
+                            <span className="task-repeat-badge" title={`Repeats ${task.recurring}`}>
+                              <i className="fa-solid fa-rotate"></i> {task.recurring}
+                            </span>
+                          ) : null}
                         </div>
                         {renderTags(task)}
                         {task.description ? <div className="task-desc-preview">{escapeHtml(task.description)}</div> : null}

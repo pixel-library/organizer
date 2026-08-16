@@ -77,13 +77,17 @@ const assert = (name, cond, extra = "") => {
 const React = require("react");
 const { createRoot } = require("react-dom/client");
 
+/* ================= dynamic dates (Agenda view renders today + next 2 days) ================= */
+const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const today = fmtDate(new Date());
+
 /* ================= real backend + cookie jar ================= */
 await connectDatabase();
 const suffix = Date.now();
-const emailA = `complete-a-${suffix}@test.dev`;
-const emailB = `complete-b-${suffix}@test.dev`;
+const usernameA = `complete-a-${suffix}`;
+const usernameB = `complete-b-${suffix}`;
 const password = "correct-horse-battery-staple";
-await getPool().query("DELETE FROM users WHERE email LIKE $1", ["complete-%@test.dev"]);
+await getPool().query("DELETE FROM users WHERE username LIKE $1", ["complete-%"]);
 
 const app = createApp();
 const httpServer = app.listen(0);
@@ -173,15 +177,15 @@ const saveModal = async () => {
   clickEl(btn);
   await sleep(120);
 };
-const registerViaUi = async (name, email) => {
+const registerViaUi = async (name, username) => {
   await mountApp();
   await waitForAuthScreen();
   clickEl(byTextIn(".standard-panel button", "Create one"));
   await sleep(50);
   const form = document.querySelector('form[aria-label="Authentication form"]');
-  const [nameInput, emailInput, passwordInput] = form.querySelectorAll("input");
+  const [nameInput, usernameInput, passwordInput] = form.querySelectorAll("input");
   setNativeValue(nameInput, name);
-  setNativeValue(emailInput, email);
+  setNativeValue(usernameInput, username);
   setNativeValue(passwordInput, password);
   submitForm(form);
   await waitForWorkspace();
@@ -194,9 +198,9 @@ assert("Protected app shows AuthScreen when logged out", document.querySelector(
 assert("No workspace content while logged out", !document.getElementById("nav-dashboard"));
 
 /* register via UI */
-await registerViaUi("Complete Alice", emailA);
+await registerViaUi("Complete Alice", usernameA);
 assert("Register via UI loads workspace", bodyText().includes("Life Planner"));
-assert("Sidebar shows profile name (profile read)", bodyText().includes("Complete Alice") && bodyText().includes(emailA));
+assert("Sidebar shows profile name (profile read)", bodyText().includes("Complete Alice") && bodyText().includes(usernameA));
 
 /* refresh while logged in (fresh component, same session) */
 await mountApp();
@@ -207,17 +211,18 @@ assert("Data still loaded after refresh (dashboard nav present)", document.getEl
 /* login with wrong password shows an error */
 await mountApp();
 await waitForWorkspace();
+await sleep(400); // let in-flight collection loads settle before logging out
 const logoutBtn = document.querySelector('button[aria-label="Sign out"]');
 clickEl(logoutBtn);
 await waitForAuthScreen();
 assert("Logout returns to AuthScreen", document.querySelector('form[aria-label="Authentication form"]') !== null);
 const form = document.querySelector('form[aria-label="Authentication form"]');
-const [emailInput, passwordInput] = form.querySelectorAll("input");
-setNativeValue(emailInput, emailA);
+const [usernameInput, passwordInput] = form.querySelectorAll("input");
+setNativeValue(usernameInput, usernameA);
 setNativeValue(passwordInput, "wrong-password-123");
 submitForm(form);
-await waitFor(() => bodyText().includes("Invalid email or password"));
-assert("Wrong-password login shows error", bodyText().includes("Invalid email or password"));
+await waitFor(() => bodyText().includes("Invalid username or password"));
+assert("Wrong-password login shows error", bodyText().includes("Invalid username or password"));
 
 /* login with correct password */
 setNativeValue(passwordInput, password);
@@ -239,7 +244,7 @@ await sleep(80);
 clickEl(document.querySelector(".header-create"));
 await waitFor(() => document.querySelector("#create-modal .modal-save") !== null);
 assert("TaskModal opens from Create Task", document.querySelector("#create-modal") !== null);
-await fillModal({ "Title / Task Name": "Complete Task One", Date: "2026-08-15", "Specific Time": "09:30" });
+await fillModal({ "Title / Task Name": "Complete Task One", Date: today, "Specific Time": "09:30" });
 await saveModal();
 await waitFor(() => bodyText().includes("Complete Task One"));
 assert("Task created + read in list", bodyText().includes("Complete Task One"));
@@ -313,7 +318,7 @@ clickNav("nav-calendar");
 await sleep(80);
 clickEl(document.querySelector(".header-create"));
 await waitFor(() => document.querySelector("#create-modal .modal-save") !== null);
-await fillModal({ Title: "Complete Event", Date: "2026-08-15", "End Date": "2026-08-15" });
+await fillModal({ Title: "Complete Event", Date: today, "End Date": today });
 await saveModal();
 await waitFor(() => bodyText().includes("Complete Event"));
 assert("Calendar event created + read in month view", bodyText().includes("Complete Event"));
@@ -356,11 +361,17 @@ await sleep(80);
 assert("Dashboard empty after clearing", bodyText().includes("Welcome to Organizer"));
 
 /* create a task + event for today, then complete the task via the UI */
+/* task gets a past time (now), event a future time — so the event becomes the dashboard NEXT EVENT */
+const now = new Date();
+const taskTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+const eventTime = now.getHours() < 23
+  ? `${String(now.getHours() + 1).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+  : "23:59";
 clickNav("nav-tasks");
 await sleep(60);
 clickEl(document.querySelector(".header-create"));
 await waitFor(() => document.querySelector("#create-modal .modal-save") !== null);
-await fillModal({ "Title / Task Name": "Dashboard Task" });
+await fillModal({ "Title / Task Name": "Dashboard Task", "Specific Time": taskTime });
 await saveModal();
 await waitFor(() => bodyText().includes("Dashboard Task"));
 clickEl(document.querySelector("#view-tasks .task-status-wrap input[type=checkbox]"));
@@ -369,7 +380,7 @@ clickNav("nav-calendar");
 await sleep(60);
 clickEl(document.querySelector(".header-create"));
 await waitFor(() => document.querySelector("#create-modal .modal-save") !== null);
-await fillModal({ Title: "Dashboard Event" });
+await fillModal({ Title: "Dashboard Event", "Start Time": eventTime });
 await saveModal();
 await waitFor(() => bodyText().includes("Dashboard Event"));
 clickNav("nav-dashboard");
@@ -386,10 +397,10 @@ assert("Analytics task totals real", bodyText().includes("1 / 1 tasks"));
 assert("Analytics events this month real", bodyText().includes("Events This Month") && bodyText().includes("1"));
 
 /* ================= ANALYTICS: empty state (fresh user) ================= */
-const emailEmpty = `complete-empty-${suffix}@test.dev`;
+const usernameEmpty = `complete-empty-${suffix}`;
 clickEl(document.querySelector('button[aria-label="Sign out"]'));
 await waitForAuthScreen();
-await registerViaUi("Empty User", emailEmpty);
+await registerViaUi("Empty User", usernameEmpty);
 clickNav("nav-analytics");
 await sleep(80);
 assert("Analytics empty state (fresh user)", bodyText().includes("No productivity data yet"));
@@ -397,13 +408,13 @@ assert("Analytics empty state (fresh user)", bodyText().includes("No productivit
 /* ================= PROFILE: read + update ================= */
 const apiA = await jarFetch(`${base}/auth/login`, {
   method: "POST", headers: { "content-type": "application/json" },
-  body: JSON.stringify({ email: emailA, password })
+  body: JSON.stringify({ username: usernameA, password })
 });
 assert("Login as A via API (for profile update)", apiA.status === 200, String(apiA.status));
 
 await mountApp();
 await waitForWorkspace();
-assert("Sidebar shows A identity", bodyText().includes("Complete Alice") && bodyText().includes(emailA));
+assert("Sidebar shows A identity", bodyText().includes("Complete Alice") && bodyText().includes(usernameA));
 
 const putProfile = await jarFetch(`${base}/profile`, {
   method: "PUT", headers: { "content-type": "application/json" },
@@ -420,7 +431,7 @@ assert("Sidebar reflects updated profile after refresh", bodyText().includes("Co
 /* ================= USER ISOLATION ================= */
 clickEl(document.querySelector('button[aria-label="Sign out"]'));
 await waitForAuthScreen();
-await registerViaUi("Bob Isolated", emailB);
+await registerViaUi("Bob Isolated", usernameB);
 assert("Fresh user B workspace is empty", bodyText().includes("Welcome to Organizer"));
 assert("B sees no A data (backend empty)", await waitServer("/tasks", (t) => t.length === 0));
 
@@ -438,8 +449,8 @@ await waitForAuthScreen();
 clickEl(byTextIn(".standard-panel button", "Sign in"));
 await sleep(50);
 const loginForm = document.querySelector('form[aria-label="Authentication form"]');
-const [ae, ap] = loginForm.querySelectorAll("input");
-setNativeValue(ae, emailA);
+const [au, ap] = loginForm.querySelectorAll("input");
+setNativeValue(au, usernameA);
 setNativeValue(ap, password);
 submitForm(loginForm);
 await waitForWorkspace();
@@ -541,8 +552,8 @@ const benignPatterns = [/not implemented/i, /uncaught/i];
 const realConsoleErrors = consoleErrors.filter((e) => !benignPatterns.some((p) => p.test(e)));
 assert("No console errors/warnings during full run", realConsoleErrors.length === 0, realConsoleErrors.slice(0, 5).join(" | "));
 /* cleanup */
-await getPool().query("DELETE FROM users WHERE email LIKE $1", ["complete-%@test.dev"]);
-const leftoverUsers = (await getPool().query("SELECT count(*)::int AS n FROM users WHERE email LIKE 'complete-%@test.dev'")).rows[0].n;
+await getPool().query("DELETE FROM users WHERE username LIKE $1", ["complete-%"]);
+const leftoverUsers = (await getPool().query("SELECT count(*)::int AS n FROM users WHERE username LIKE 'complete-%'")).rows[0].n;
 assert("No leftover test users", leftoverUsers === 0, String(leftoverUsers));
 assert("No leftover test rows", (await getPool().query(
   "SELECT (SELECT count(*)::int FROM tasks) + (SELECT count(*)::int FROM notes) + (SELECT count(*)::int FROM calendar_events) + (SELECT count(*)::int FROM goals) + (SELECT count(*)::int FROM habits) + (SELECT count(*)::int FROM meals) + (SELECT count(*)::int FROM grocery_items) + (SELECT count(*)::int FROM custom_reminders) + (SELECT count(*)::int FROM activity_log) AS n"

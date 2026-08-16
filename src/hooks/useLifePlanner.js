@@ -22,6 +22,22 @@ const parseDateKey = (key) => {
   if (parts.length < 3 || parts.some(isNaN)) return null;
   return new Date(parts[0], parts[1] - 1, parts[2]);
 };
+
+const nextOccurrenceDate = (dateKey, recurring) => {
+  const d = parseDateKey(dateKey);
+  if (!d) return null;
+  if (recurring === "daily") d.setDate(d.getDate() + 1);
+  else if (recurring === "weekly") d.setDate(d.getDate() + 7);
+  else if (recurring === "monthly") {
+    const day = d.getDate();
+    const nextMonth = d.getMonth() + 1;
+    const lastDay = new Date(d.getFullYear(), nextMonth + 1, 0).getDate();
+    d.setMonth(nextMonth, Math.min(day, lastDay));
+  } else {
+    return null;
+  }
+  return dateKeyFrom(d);
+};
 const dayBeforeKey = (key) => {
   const d = parseDateKey(key);
   if (!d) return null;
@@ -386,17 +402,17 @@ export function useLifePlanner() {
     return () => { cancelled = true; };
   }, [boot]);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (username, password) => {
     setAuthError("");
-    const data = await api.post("/auth/login", { email, password });
+    const data = await api.post("/auth/login", { username, password });
     setUser(data);
     setAuthStatus("ready");
     await enterApp();
   }, [enterApp]);
 
-  const register = useCallback(async (name, email, password) => {
+  const register = useCallback(async (name, username, password) => {
     setAuthError("");
-    const data = await api.post("/auth/register", { name, email, password });
+    const data = await api.post("/auth/register", { name, username, password });
     setUser(data);
     setAuthStatus("ready");
     await enterApp();
@@ -453,8 +469,21 @@ export function useLifePlanner() {
 
   const toggleTaskCompletion = useCallback((id) => {
     const task = tasks.find(t => String(t.id) === String(id));
-    const completed = task ? !task.completed : true;
-    if (task) logHistory(task.name, task.completed ? "Reopened" : "Completed");
+    if (!task) return;
+    const completing = !task.completed;
+    const recurring = task.recurring && task.recurring !== "none" ? task.recurring : null;
+    const nextDate = completing && recurring ? nextOccurrenceDate(task.date, recurring) : null;
+    if (nextDate) {
+      logHistory(task.name, "Completed");
+      const patch = { completed: false, date: nextDate };
+      setTasks(prev => prev.map(t => String(t.id) === String(id) ? { ...t, ...patch, updatedAt: new Date().toISOString() } : t));
+      api.patch(`/tasks/${id}`, patch)
+        .then(server => { if (server) applyServerItem(setTasks, id, server); })
+        .catch(fail("tasks"));
+      return;
+    }
+    const completed = completing;
+    logHistory(task.name, task.completed ? "Reopened" : "Completed");
     setTasks(prev => prev.map(t => String(t.id) === String(id) ? { ...t, completed, updatedAt: new Date().toISOString() } : t));
     api.patch(`/tasks/${id}`, { completed })
       .then(server => { if (server) applyServerItem(setTasks, id, server); })

@@ -43,11 +43,11 @@ let base;
 async function main() {
   await connectDatabase();
   const suffix = Date.now();
-  const emailA = `stats-a-${suffix}@test.dev`;
-  const emailB = `stats-b-${suffix}@test.dev`;
+  const usernameA = `stats-a-${suffix}`;
+  const usernameB = `stats-b-${suffix}`;
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["stats-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["stats-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -65,13 +65,13 @@ async function main() {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
     });
 
-  const register = async (name, email) => {
-    const res = await call("POST", "/auth/register", { name, email, password });
+  const register = async (name, username) => {
+    const res = await call("POST", "/auth/register", { name, username, password });
     return { res, cookie: cookieFrom(res), body: await res.json() };
   };
 
-  const userA = await register("Stats Alice", emailA);
-  const userB = await register("Stats Bob", emailB);
+  const userA = await register("Stats Alice", usernameA);
+  const userB = await register("Stats Bob", usernameB);
   assert("register User A → 201", userA.res.status === 201);
   assert("register User B → 201", userB.res.status === 201);
 
@@ -227,7 +227,7 @@ async function main() {
   assert("A totalTasks unaffected by B", aAfterBBody.dashboard.totalTasks === 3, `${aAfterBBody.dashboard.totalTasks}`);
 
   // Cleanup
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["stats-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["stats-%"]);
   const leftovers = await getPool().query(
     "SELECT (SELECT count(*)::int FROM tasks) + (SELECT count(*)::int FROM calendar_events) + (SELECT count(*)::int FROM goals) + (SELECT count(*)::int FROM habits) + (SELECT count(*)::int FROM meals) + (SELECT count(*)::int FROM notes) AS n"
   );

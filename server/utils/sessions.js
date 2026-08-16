@@ -32,12 +32,28 @@ export async function revokeSession(token) {
   await getPool().query("DELETE FROM sessions WHERE token_hash = $1", [sha256(token)]);
 }
 
+export async function revokeOtherSessions(userId, keepSessionId) {
+  await getPool().query(
+    "DELETE FROM sessions WHERE user_id = $1 AND id <> $2",
+    [userId, keepSessionId]
+  );
+}
+
+export async function revokeSessionById(sessionId) {
+  await getPool().query("DELETE FROM sessions WHERE id = $1", [sessionId]);
+}
+
+export async function purgeExpiredSessions() {
+  await getPool().query("DELETE FROM sessions WHERE expires_at <= now() OR revoked_at IS NOT NULL");
+}
+
 export function safeUser(row) {
   if (!row) return null;
   return {
     id: row.id,
     name: row.name,
-    email: row.email,
+    username: row.username,
+    role: row.role || "user",
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

@@ -14,7 +14,7 @@ export async function requireAuth(req, _res, next) {
 
     const { rows } = await getPool().query(
       `SELECT s.id AS session_id, s.last_seen_at, s.expires_at, s.revoked_at,
-              u.id AS user_id, u.name, u.email, u.created_at, u.updated_at
+              u.id AS user_id, u.name, u.username, u.role, u.created_at, u.updated_at
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = $1`,
@@ -55,7 +55,8 @@ export async function requireAuth(req, _res, next) {
     req.user = {
       id: session.user_id,
       name: session.name,
-      email: session.email,
+      username: session.username,
+      role: session.role,
       createdAt: session.created_at,
       updatedAt: session.updated_at
     };

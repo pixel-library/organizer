@@ -3,7 +3,7 @@ import { useState } from "react";
 export default function AuthScreen({ onLogin, onRegister, error = "" }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState("");
@@ -15,18 +15,18 @@ export default function AuthScreen({ onLogin, onRegister, error = "" }) {
       setLocalError("Please enter your name.");
       return;
     }
-    if (!email.trim() || password.length < 8) {
+    if (!username.trim() || password.length < 8) {
       setLocalError(mode === "register"
-        ? "Please enter a valid email and a password of at least 8 characters."
-        : "Please enter your email and password.");
+        ? "Please enter a username (3+ characters) and a password of at least 8 characters."
+        : "Please enter your username and password.");
       return;
     }
     setBusy(true);
     try {
       if (mode === "register") {
-        await onRegister(name.trim(), email.trim(), password);
+        await onRegister(name.trim(), username.trim(), password);
       } else {
-        await onLogin(email.trim(), password);
+        await onLogin(username.trim(), password);
       }
     } catch (err) {
       setLocalError(err.message || "Something went wrong.");
@@ -35,86 +35,101 @@ export default function AuthScreen({ onLogin, onRegister, error = "" }) {
     }
   };
 
-  const inputStyle = {
-    display: "block",
-    width: "100%",
-    boxSizing: "border-box",
-    marginBottom: 12,
-    padding: "10px 12px",
-    fontSize: 14,
-    borderRadius: 8,
-    border: "1px solid rgba(57,63,75,.14)",
-    background: "#FFFFFF",
-    color: "var(--text, #393F4B)",
-    outline: "none"
+  const switchMode = (next) => {
+    setMode(next);
+    setLocalError("");
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div className="standard-panel" style={{ maxWidth: 400, width: "100%" }}>
-        <div className="standard-panel-heading">
-          <div>
-            <span className="panel-kicker">PERSONAL WORKSPACE</span>
-            <h2>{mode === "login" ? "Welcome back" : "Create your account"}</h2>
-            <p>
-              {mode === "login"
-                ? "Sign in to access your dashboard, tasks, notes and planner data."
-                : "Your data is stored securely and synced across devices."}
-            </p>
+    <div className="auth-shell">
+      <div className="auth-blob auth-blob-1"></div>
+      <div className="auth-blob auth-blob-2"></div>
+
+      <div className="auth-wrap">
+        <main className="auth-card" aria-label="Authentication">
+          <div className="auth-brand">
+            <span className="auth-logo"><span className="auth-logo-dot"></span></span>
+            <h1>Life Planner</h1>
+            <p>WORKSPACE OS</p>
           </div>
-        </div>
 
-        <form onSubmit={submit} aria-label="Authentication form">
-          {mode === "register" && (
-            <input
-              type="text"
-              placeholder="Full name"
-              aria-label="Full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
-            />
-          )}
-          <input
-            type="email"
-            placeholder="Email address"
-            aria-label="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            style={inputStyle}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            aria-label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            style={inputStyle}
-          />
-          {(localError || error) && (
-            <p className="analytics-empty-state" style={{ color: "#b91c1c", marginBottom: 12, padding: 0, textAlign: "left" }}>
-              {localError || error}
-            </p>
-          )}
-          <button type="submit" className="small-primary" style={{ width: "100%" }} disabled={busy}>
-            <i className="fa-solid fa-arrow-right-to-bracket"></i>
-            {busy ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account"}
-          </button>
-        </form>
+          <div className="auth-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "login"}
+              className={`auth-tab ${mode === "login" ? "active" : ""}`}
+              onClick={() => switchMode("login")}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "register"}
+              className={`auth-tab ${mode === "register" ? "active" : ""}`}
+              onClick={() => switchMode("register")}
+            >
+              Create Account
+            </button>
+          </div>
 
-        <p className="analytics-empty-state" style={{ marginTop: 16, padding: 0, textAlign: "center" }}>
-          {mode === "login" ? "Don't have an account yet?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            className="light-action-btn"
-            style={{ padding: "4px 10px" }}
-            onClick={() => { setMode(mode === "login" ? "register" : "login"); setLocalError(""); }}
-          >
-            {mode === "login" ? "Create one" : "Sign in"}
-          </button>
-        </p>
+          <form onSubmit={submit} aria-label={mode === "login" ? "Sign in form" : "Create account form"}>
+            {mode === "register" && (
+              <div className="auth-field">
+                <label htmlFor="auth-name">Full Name</label>
+                <input
+                  id="auth-name"
+                  type="text"
+                  placeholder="Your name"
+                  aria-label="Full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="auth-field">
+              <label htmlFor="auth-username">Username</label>
+              <input
+                id="auth-username"
+                type="text"
+                placeholder="Choose a username"
+                aria-label="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck="false"
+              />
+            </div>
+            <div className="auth-field">
+              <label htmlFor="auth-password">Password</label>
+              <input
+                id="auth-password"
+                type="password"
+                placeholder={mode === "register" ? "At least 8 characters" : "Enter your password"}
+                aria-label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+              />
+            </div>
+
+            {(localError || error) && (
+              <p className="auth-error" role="alert">
+                <i className="fa-solid fa-circle-exclamation"></i>
+                {localError || error}
+              </p>
+            )}
+
+            <button type="submit" className="auth-submit" disabled={busy}>
+              <i className={`fa-solid ${mode === "login" ? "fa-arrow-right-to-bracket" : "fa-user-plus"}`}></i>
+              {busy ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account"}
+            </button>
+          </form>
+        </main>
+
+        <p className="auth-footer">Your data stays yours — synced to your account.</p>
       </div>
     </div>
   );

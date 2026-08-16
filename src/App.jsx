@@ -22,6 +22,9 @@ import SearchModal from "./components/SearchModal";
 import UndoToast from "./components/UndoToast";
 import ImportExportModal from "./components/ImportExportModal";
 import AuthScreen from "./components/AuthScreen";
+import OfflineBanner from "./components/OfflineBanner";
+import AdminPanel from "./components/AdminPanel";
+import SettingsView from "./components/SettingsView";
 
 const VIEW_TITLES = {
   dashboard: "Dashboard Overview",
@@ -33,7 +36,9 @@ const VIEW_TITLES = {
   history: "History Archive",
   analytics: "Productivity Analytics",
   goals: "Goals",
-  reminders: "Reminders"
+  reminders: "Reminders",
+  admin: "Admin Panel",
+  settings: "Settings"
 };
 
 const CREATE_LABELS = {
@@ -46,7 +51,9 @@ const CREATE_LABELS = {
   history: "History",
   analytics: "Export",
   goals: "New Goal",
-  reminders: "New Reminder"
+  reminders: "New Reminder",
+  admin: "Backup",
+  settings: "Export"
 };
 
 const THEME_CYCLE = ["dark", "light", "system"];
@@ -129,13 +136,31 @@ export default function App() {
         if (task.reminder === "1hour" && difference === 60) shouldNotify = true;
         if (shouldNotify) {
           notifiedTasksRef.current.add(task.id);
-          setReminderText(`Reminder: "${task.name}" is scheduled for ${task.time}.`);
+          const text = `Reminder: "${task.name}" is scheduled for ${task.time}.`;
+          setReminderText(text);
           setShowReminder(true);
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            try {
+              new Notification(task.name, {
+                body: `Scheduled for ${task.time}`,
+                icon: "/icons/icon-192.png",
+                tag: `task-reminder-${task.id}`
+              });
+            } catch { /* notification unsupported */ }
+          }
         }
       });
     }, 10000);
     return () => clearInterval(interval);
   }, [tasks, formatDateKey]);
+
+  useEffect(() => {
+    if (authStatus !== "ready") return;
+    if (typeof Notification === "undefined" || Notification.permission !== "default") return;
+    try {
+      Notification.requestPermission();
+    } catch { /* permission API unsupported */ }
+  }, [authStatus]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -361,6 +386,8 @@ export default function App() {
     else if (currentView === "goals") setGoalOpenRequest(n => n + 1);
     else if (currentView === "reminders") setReminderOpenRequest(n => n + 1);
     else if (currentView === "tasks" || currentView === "dashboard") openCreateModal();
+    else if (currentView === "settings") { setIoMode("export"); setIoOpen(true); }
+    else if (currentView === "admin") { window.dispatchEvent(new CustomEvent("admin-open-backup")); }
   }, [currentView, openEventModal, openNoteModal, openMealModal, openCreateModal, addHabit]);
 
   const openCalendarForTask = useCallback((id) => {
@@ -411,11 +438,17 @@ export default function App() {
   }
 
   if (authStatus === "unauthenticated") {
-    return <AuthScreen onLogin={login} onRegister={register} error={authError} />;
+    return (
+      <>
+        <OfflineBanner />
+        <AuthScreen onLogin={login} onRegister={register} error={authError} />
+      </>
+    );
   }
 
   return (
     <div className="flex antialiased">
+      <OfflineBanner />
       <Sidebar
         currentView={currentView}
         onSwitchView={switchView}
@@ -616,6 +649,19 @@ export default function App() {
               onRemoveItem={removeHistoryItem}
               onClear={clearHistory}
               escapeHtml={escapeHtml}
+            />
+          )}
+          {currentView === "admin" && user?.role === "admin" && (
+            <AdminPanel user={user} />
+          )}
+          {currentView === "settings" && (
+            <SettingsView
+              user={user}
+              settings={settings}
+              setSettings={setSettings}
+              onExport={() => openImportExport("export")}
+              onImport={() => openImportExport("import")}
+              onLogout={logout}
             />
           )}
         </div>

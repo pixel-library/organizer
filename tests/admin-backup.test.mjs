@@ -32,9 +32,10 @@ try {
   await client.connect();
 
   const email = `backuptest-${Date.now()}@example.com`;
+  const username = `backup-${Date.now()}`;
   const user = await client.query(
-    `INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
-    ["Backup Test User", email, "hash"]
+    `INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
+    ["Backup Test User", username, email, "hash"]
   );
   userId = user.rows[0].id;
 
@@ -61,7 +62,7 @@ try {
   assert("view: tables include users + tasks", vdata && Array.isArray(vdata.tables) && vdata.tables.some((t) => t.name === "users") && vdata.tables.some((t) => t.name === "tasks"), viewed.stdout);
   const usersTable = vdata && vdata.tables.find((t) => t.name === "users");
   assert("view: users table has rows", usersTable && usersTable.rows.length >= 1, viewed.stdout);
-  assert("view: seeded user data round-trips", usersTable && usersTable.rows.some((r) => r.email === email), viewed.stdout);
+  assert("view: seeded user data round-trips", usersTable && usersTable.rows.some((r) => r.username === username), viewed.stdout);
   assert("view: exportedAt present", vdata && typeof vdata.exportedAt === "string", viewed.stdout);
 
   const tviewed = run("scripts/admin-view.js", [backupFile, ...args, "--pass", "s3cret-phrase", "--table", "users", "--json"]);
@@ -73,7 +74,7 @@ try {
     }
   })();
   assert("view --table: exit 0", tviewed.status === 0, tviewed.stdout + tviewed.stderr);
-  assert("view --table: correct table selected", tdata && tdata.table === "users" && tdata.rows.some((r) => r.email === email), tviewed.stdout);
+  assert("view --table: correct table selected", tdata && tdata.table === "users" && tdata.rows.some((r) => r.username === username), tviewed.stdout);
 
   const missingTable = run("scripts/admin-view.js", [backupFile, ...args, "--pass", "s3cret-phrase", "--table", "nope"]);
   assert("view unknown table rejected", missingTable.status === 1, missingTable.stdout + missingTable.stderr);

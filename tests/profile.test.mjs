@@ -23,11 +23,11 @@ let base;
 async function main() {
   await connectDatabase();
   const suffix = Date.now();
-  const emailA = `profile-a-${suffix}@test.dev`;
-  const emailB = `profile-b-${suffix}@test.dev`;
+  const usernameA = `profile-a-${suffix}`;
+  const usernameB = `profile-b-${suffix}`;
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["profile-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["profile-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -45,14 +45,14 @@ async function main() {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
     });
 
-  const register = async (name, email) => {
-    const res = await call("POST", "/auth/register", { name, email, password });
+  const register = async (name, username) => {
+    const res = await call("POST", "/auth/register", { name, username, password });
     return { res, cookie: cookieFrom(res), body: await res.json() };
   };
 
   // Setup: User A and User B
-  const userA = await register("Alice A", emailA);
-  const userB = await register("Bob B", emailB);
+  const userA = await register("Alice A", usernameA);
+  const userB = await register("Bob B", usernameB);
   assert("register User A → 201", userA.res.status === 201, String(userA.res.status));
   assert("register User B → 201", userB.res.status === 201, String(userB.res.status));
 
@@ -61,16 +61,16 @@ async function main() {
   assert("GET /profile (A) → 200", readA.status === 200, String(readA.status));
   const profileA = await readA.json();
   assert("GET /profile (A) returns A name", profileA.name === "Alice A", profileA.name);
-  assert("GET /profile (A) returns A email", profileA.email === emailA, profileA.email);
+  assert("GET /profile (A) returns A username", profileA.username === usernameA, profileA.username);
   assert("GET /profile (A) returns A id", String(profileA.id) === String(userA.body.id));
   assert("GET /profile never returns password_hash", profileA.password_hash === undefined && profileA.password === undefined);
 
   // 3. Update profile (User A)
-  const updateA = await call("PUT", "/profile", { name: "Alice Updated", email: emailA }, userA.cookie);
+  const updateA = await call("PUT", "/profile", { name: "Alice Updated", username: usernameA }, userA.cookie);
   assert("PUT /profile (A) → 200", updateA.status === 200, String(updateA.status));
   const updatedA = await updateA.json();
   assert("PUT /profile (A) returns new name", updatedA.name === "Alice Updated", updatedA.name);
-  assert("PUT /profile (A) preserves email", updatedA.email === emailA);
+  assert("PUT /profile (A) preserves username", updatedA.username === usernameA);
 
   // 4. Refresh — fresh request still sees updated profile
   const refreshA = await call("GET", "/profile", undefined, userA.cookie);
@@ -79,14 +79,14 @@ async function main() {
   assert("refresh shows persisted name", refreshBody.name === "Alice Updated", refreshBody.name);
 
   // 5. Verify persistence directly in the database
-  const dbA = await getPool().query("SELECT name, email FROM users WHERE id = $1", [userA.body.id]);
-  assert("persisted to database", dbA.rows[0].name === "Alice Updated" && dbA.rows[0].email === emailA);
+  const dbA = await getPool().query("SELECT name, username FROM users WHERE id = $1", [userA.body.id]);
+  assert("persisted to database", dbA.rows[0].name === "Alice Updated" && dbA.rows[0].username === usernameA);
 
   // 6. User B isolation — client-supplied userId/id must be ignored
   const updateB = await call(
     "PUT",
     "/profile",
-    { name: "Bob Updated", userId: userA.body.id, id: userA.body.id, email: emailB },
+    { name: "Bob Updated", userId: userA.body.id, id: userA.body.id, username: usernameB },
     userB.cookie
   );
   assert("PUT /profile (B) → 200", updateB.status === 200, String(updateB.status));
@@ -97,23 +97,23 @@ async function main() {
   const bAfter = await call("GET", "/profile", undefined, userB.cookie).then((r) => r.json());
   assert("A profile unchanged by B", aAfter.name === "Alice Updated");
   assert("B profile has own update", bAfter.name === "Bob Updated");
-  assert("A email untouched", aAfter.email === emailA);
+  assert("A username untouched", aAfter.username === usernameA);
 
-  // B cannot claim A's email
-  const stealEmail = await call("PUT", "/profile", { email: emailA }, userB.cookie);
-  assert("B taking A email → 409", stealEmail.status === 409, String(stealEmail.status));
+  // B cannot claim A's username
+  const stealUsername = await call("PUT", "/profile", { username: usernameA }, userB.cookie);
+  assert("B taking A username → 409", stealUsername.status === 409, String(stealUsername.status));
 
   // Validation
   const badName = await call("PUT", "/profile", { name: "" }, userA.cookie);
   assert("empty name → 400", badName.status === 400);
-  const badEmail = await call("PUT", "/profile", { email: "nope" }, userA.cookie);
-  assert("invalid email → 400", badEmail.status === 400);
+  const badUsername = await call("PUT", "/profile", { username: "no way!" }, userA.cookie);
+  assert("invalid username → 400", badUsername.status === 400);
   const noFields = await call("PUT", "/profile", {}, userA.cookie);
   assert("empty body → 400", noFields.status === 400);
 
-  // Email-only update (partial)
+  // Name-only update (partial)
   const partial = await call("PUT", "/profile", { name: "Alice Final" }, userA.cookie);
-  assert("partial update keeps email", (await partial.json()).email === emailA);
+  assert("partial update keeps username", (await partial.json()).username === usernameA);
 
   // Unauthenticated access
   const noCookieGet = await call("GET", "/profile", undefined);
@@ -122,7 +122,7 @@ async function main() {
   assert("PUT /profile without login → 401", noCookiePut.status === 401, String(noCookiePut.status));
 
   // Cleanup
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["profile-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["profile-%"]);
   const leftover = await getPool().query("SELECT count(*)::int AS n FROM sessions");
   assert("no leftover sessions after cleanup", leftover.rows[0].n === 0, `${leftover.rows[0].n} rows`);
 

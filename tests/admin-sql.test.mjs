@@ -36,7 +36,7 @@ assert("sql-query: row value correct", data && data.rows[0].one === 1, simple.st
 
 const fromUsers = run(
   "scripts/admin.js",
-  [...args, "--json", "--sql-query", "SELECT id, email FROM users WHERE email ILIKE '%example%'"]
+  [...args, "--json", "--sql-query", "SELECT id, username FROM users WHERE username ILIKE '%example%'"]
 );
 const udata = (() => {
   try {
@@ -70,7 +70,7 @@ const drdata = (() => {
 assert("DROP TABLE rejected (exit 1)", drop.status === 1, drop.stdout + drop.stderr);
 assert("DROP blocked by read-only transaction", drdata && drdata.ok === false && /read-only/i.test(drdata.error), drop.stdout);
 
-const insert = run("scripts/admin.js", [...args, "--json", "--sql-query", "INSERT INTO users (name,email,password_hash) VALUES ('x','y@z.com','h')"]);
+const insert = run("scripts/admin.js", [...args, "--json", "--sql-query", "INSERT INTO users (name,username,email,password_hash) VALUES ('x','xz','y@z.com','h')"]);
 assert("INSERT rejected (exit 1)", insert.status === 1, insert.stdout + insert.stderr);
 
 const repl = spawnSync(

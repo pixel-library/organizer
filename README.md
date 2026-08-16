@@ -88,6 +88,21 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 - **Undo toast** after any deletion (8-second window)
 - **Import / Export** data as a JSON backup — merge with existing data or replace everything
 - **Themes**: dark, light, and system-following with a one-click cycle
+- **Recurring tasks** — mark a daily/weekly/monthly task done and it rolls itself to the next occurrence
+- **PWA**: installable, with an offline service worker, offline banner, and browser notifications for task reminders
+
+### Settings
+- Profile overview, appearance (theme), and browser notification permission
+- Change password (signs out other devices) and revoke all other sessions
+- Export / import your data, and a confirmed account deletion
+
+### Admin Panel (role: admin)
+- Overview stats (users, sessions, tables, database health)
+- User management: search, sort, paginate, promote/demote roles, delete (with self-protection)
+- Session management: list and revoke any session
+- Activity log across all users with search
+- Data browser: page, filter (`col=value`, `col~text`), sort, and inspect any table
+- **Encrypted `.lzb` backups** (AES-256-GCM + scrypt) with restore, or plain JSON dump/restore
 
 ## Tech Stack
 
@@ -100,7 +115,8 @@ All user data is stored securely in **PostgreSQL** behind an **Express API**, pr
 | Typography | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) |
 | Linting | [oxlint](https://oxc.rs/) |
 | Testing | [jsdom](https://github.com/jsdom/jsdom) + Vite SSR + Node test runner |
-| API | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) + [cookie-parser](https://github.com/expressjs/cookie-parser) |
+| PWA | [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) (Workbox) — installable + offline |
+| API | [Express 5](https://expressjs.com/) + [helmet](https://helmetjs.github.io/) + [cors](https://github.com/expressjs/cors) + [cookie-parser](https://github.com/expressjs/cookie-parser) + [express-rate-limit](https://express-rate-limit.mintlify.app/) |
 | Database | [PostgreSQL](https://www.postgresql.org/) + [node-pg-migrate](https://salsita.github.io/node-pg-migrate/) + [embedded-postgres](https://github.com/leinelissen/embedded-postgres) (dev) |
 
 ## Getting Started
@@ -141,9 +157,15 @@ Open `http://localhost:5173` in your browser.
 
 ## Authentication
 
-The app is **account-based**: on first load you create an account (name, email, password) or sign in. Passwords are hashed with **bcrypt** server-side and never stored or transmitted in plaintext. Sessions use secure, **httpOnly** cookies backed by a server-side `sessions` table with sliding expiration.
+The app is **account-based**: on first load you create an account (name, **unique username**, password) or sign in. Passwords are hashed with **bcrypt** server-side and never stored or transmitted in plaintext. Sessions use secure, **httpOnly** cookies backed by a server-side `sessions` table with sliding expiration.
 
 The authenticated user is always resolved from the session cookie — a `userId` supplied by the client is never trusted, and every collection query enforces `user_id = <session user>`. Password hashes, session tokens, and secrets are never returned by the API and never stored in the frontend.
+
+Brute-force protection is layered:
+
+- **Per-IP rate limiting** on authentication endpoints (`RATE_LIMIT_AUTH_MAX`, default 20 requests / 15 min) and on the API (`RATE_LIMIT_API_MAX`, default 1000 / 15 min).
+- **Per-username lockout** — after `LOGIN_MAX_FAILS` (default 10) failed logins for one username, that account is locked for `LOGIN_LOCK_MINUTES` (default 15), even with the correct password. The lock is in-memory (per process) and the login endpoint runs a dummy bcrypt compare for unknown usernames so response timing does not reveal whether an account exists.
+- **Admin API** gets its own stricter limiter (`RATE_LIMIT_ADMIN_MAX`, default 300 / 15 min).
 
 ## Backend API
 
@@ -151,11 +173,14 @@ The API is RESTful under `/api`. Every collection route requires authentication 
 
 ```
 GET  /api/health                  # service + database status
-POST /api/auth/register           # create account → session cookie
+POST /api/auth/register           # create account (name, unique username) → session cookie
 POST /api/auth/login              # verify credentials → session cookie
 POST /api/auth/logout             # invalidate session + clear cookie
 GET  /api/auth/me                 # current user
-GET/PUT /api/profile              # read / update profile (name, email)
+POST /api/auth/change-password    # update password (revokes other sessions)
+POST /api/auth/revoke-sessions    # sign out all other devices
+DELETE /api/auth/account          # delete the account permanently
+GET/PUT /api/profile              # read / update profile (name)
 
 GET/POST /api/tasks               # tasks — search/filters/sorting
 GET/PUT/PATCH/DELETE /api/tasks/:id
@@ -177,6 +202,19 @@ GET/POST /api/activityLog         # activity log
 DELETE /api/activityLog/:id
 GET  /api/stats                   # dashboard + analytics metrics
 POST /api/migrate                 # one-time localStorage → database import
+
+# Admin API — requires role=admin + session cookie (stricter rate limit)
+GET  /api/admin/stats             # users/sessions/tables/db overview
+GET  /api/admin/users             # list (search/sort/page) + per-user detail
+PATCH /api/admin/users/:id/role   # promote/demote (self-demotion blocked)
+DELETE /api/admin/users/:id       # delete a user (self-deletion blocked)
+GET  /api/admin/sessions          # list all sessions
+POST /api/admin/sessions/:id/revoke
+GET  /api/admin/activity          # activity log across users (?search=)
+GET  /api/admin/data/:table       # table browser (?search=&filter=&sort=&dir=&page=)
+GET  /api/admin/export            # plain JSON dump of every table
+POST /api/admin/backup            # encrypted .lzb backup ({ passphrase })
+POST /api/admin/restore           # restore from JSON dump or encrypted backup
 ```
 
 Notes:
@@ -237,12 +275,13 @@ npm run test:notes      # notes API suite
 npm run test:calendar   # calendar events API suite
 npm run test:stats      # dashboard/analytics stats suite
 npm run test:collections # goals/habits/meals/grocery/reminders/activity-log/migrate suite
-npm run test:security   # auth isolation + security suite
+npm run test:security   # auth isolation + security suite (incl. per-username lockout)
 npm run test:complete   # full end-to-end UI suite (real backend)
 npm run test:admin      # admin console: auth + dynamic table list
 npm run test:admin:browse # admin console: browse/search/filter/sort/breakdown
 npm run test:admin:sql  # admin console: read-only SQL mode
 npm run test:admin:backup # admin console: encrypted backup export/view
+npm run test:admin:api  # admin REST API suite (users/sessions/activity/data/backup/restore)
 ```
 
 The API suites need a running database (`npm run db:start` + `npm run db:migrate`). The schema is created without any seed data — all tables start empty.
@@ -323,6 +362,10 @@ life-organizer/
 │   │   ├── QuickAdd.jsx     # Quick-add menu
 │   │   ├── ImportExportModal.jsx # JSON backup / restore
 │   │   ├── UndoToast.jsx    # Undo-deletion toast
+│   │   ├── AdminPanel.jsx   # Admin dashboard (users/sessions/activity/data/backup)
+│   │   ├── SettingsView.jsx # Account, security, theme & data settings
+│   │   ├── OfflineBanner.jsx # PWA offline indicator
+│   │   ├── InstallButton.jsx # PWA install prompt
 │   │   └── ...              # Editors & modals
 │   ├── hooks/
 │   │   └── useLifePlanner.js # Core state, persistence & actions
@@ -359,8 +402,11 @@ If you had existing `localStorage` data, it is migrated into your account once o
 
 - [x] Server-synced, account-based mode (Express API + PostgreSQL, all collections API-backed)
 - [x] Production readiness: auth, security, isolation, and full end-to-end test coverage
-- [ ] Notification support for background reminders (Service Worker)
-- [ ] PWA installation for offline use
+- [x] PWA installation + offline service worker
+- [x] In-app reminder notifications (browser Notification API while the app is open)
+- [x] Admin panel (web) for user/session/data management and encrypted backups
+- [x] Recurring tasks with automatic rollover on completion
+- [ ] Service Worker push notifications for reminders while the app is closed
 
 ## Contributing
 

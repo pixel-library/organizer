@@ -34,10 +34,10 @@ let base;
 async function main() {
   await connectDatabase();
   const suffix = Date.now();
-  const emailA = `auth-${suffix}@test.dev`;
+  const usernameA = `auth-${suffix}`;
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["auth-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["auth-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -61,7 +61,7 @@ async function main() {
   // 1. Register
   const reg = await post("/register", {
     name: "Auth Test",
-    email: emailA,
+    username: usernameA,
     password
   });
   assert("register returns 201", reg.status === 201, String(reg.status));
@@ -70,36 +70,36 @@ async function main() {
   assert("register cookie is httpOnly", hasHttpOnly(reg));
   assert("register returns user id", Number.isInteger(Number(regUser.id)));
   assert("register returns name", regUser.name === "Auth Test");
-  assert("register returns email (lowercased)", regUser.email === emailA);
+  assert("register returns username", regUser.username === usernameA);
   assert("register never returns password/password_hash/secrets", !/password/.test(safeKeys(regUser)) && !regUser.passwordHash);
 
   const regCookie = cookieFrom(reg);
 
   // Duplicate email protection (case-insensitive)
-  const dup = await post("/register", { name: "Other", email: emailA.toUpperCase(), password });
-  assert("duplicate email → 409", dup.status === 409);
+  const dup = await post("/register", { name: "Other", username: usernameA.toUpperCase(), password });
+  assert("duplicate username → 409", dup.status === 409);
 
   // Validation
-  const badEmail = await post("/register", { name: "X", email: "not-an-email", password });
-  assert("invalid email → 400", badEmail.status === 400);
-  const shortPass = await post("/register", { name: "X", email: `x-${suffix}@test.dev`, password: "short" });
+  const badUsername = await post("/register", { name: "X", username: "no@", password });
+  assert("invalid username → 400", badUsername.status === 400);
+  const shortPass = await post("/register", { name: "X", username: `x-${suffix}`, password: "short" });
   assert("short password → 400", shortPass.status === 400);
-  const emptyName = await post("/register", { name: "  ", email: `y-${suffix}@test.dev`, password });
+  const emptyName = await post("/register", { name: "  ", username: `y-${suffix}`, password });
   assert("empty name → 400", emptyName.status === 400);
   const noBody = await post("/register", {}, regCookie);
   assert("empty payload → 400", noBody.status === 400);
 
   // 2. Login
-  const badLogin = await post("/login", { email: emailA, password: "wrong-password" });
+  const badLogin = await post("/login", { username: usernameA, password: "wrong-password" });
   assert("login wrong password → 401", badLogin.status === 401);
-  const unknownLogin = await post("/login", { email: `nobody-${suffix}@test.dev`, password });
-  assert("login unknown email → 401", unknownLogin.status === 401);
+  const unknownLogin = await post("/login", { username: `nobody-${suffix}`, password });
+  assert("login unknown username → 401", unknownLogin.status === 401);
 
-  const login = await post("/login", { email: emailA, password });
+  const login = await post("/login", { username: usernameA, password });
   assert("login returns 200", login.status === 200, String(login.status));
   assert("login sets session cookie", cookieFrom(login)?.startsWith(`${COOKIE_NAME}=`), cookieFrom(login) ?? "no cookie");
   const loginUser = await login.json();
-  assert("login returns safe user", loginUser.email === emailA && !loginUser.password_hash);
+  assert("login returns safe user", loginUser.username === usernameA && !loginUser.password_hash);
 
   const loginCookie = cookieFrom(login);
 
@@ -108,7 +108,7 @@ async function main() {
   assert("me returns 200", me.status === 200, String(me.status));
   const meUser = await me.json();
   assert("me returns authenticated user id", String(meUser.id) === String(loginUser.id));
-  assert("me returns safe user info only", safeKeys(meUser) === "createdAt,email,id,name,updatedAt", safeKeys(meUser));
+  assert("me returns safe user info only", safeKeys(meUser) === "createdAt,id,name,role,updatedAt,username", safeKeys(meUser));
   assert("me never returns password_hash", meUser.password_hash === undefined && meUser.password === undefined);
 
   // 4. Refresh session (sliding renewal)
@@ -158,12 +158,12 @@ async function main() {
   const oversized = await fetch(`${base}/register`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name: "x", email: emailA, password: "y".repeat(2 * 1024 * 1024) })
+    body: JSON.stringify({ name: "x", username: usernameA, password: "y".repeat(6 * 1024 * 1024) })
   });
   assert("oversized JSON body → 413", oversized.status === 413, String(oversized.status));
 
   // Cleanup
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["auth-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["auth-%"]);
   const leftover = await getPool().query("SELECT count(*)::int AS n FROM sessions");
   assert("no leftover sessions after cleanup", leftover.rows[0].n === 0, `${leftover.rows[0].n} rows`);
 

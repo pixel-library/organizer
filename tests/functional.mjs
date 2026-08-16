@@ -57,12 +57,16 @@ const assert = (name, cond, extra = "") => {
 const React = require("react");
 const { createRoot } = require("react-dom/client");
 
+/* ---- dynamic dates (avoid stale hardcoded dates) ---- */
+const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const today = fmtDate(new Date());
+
 /* ---- real backend + cookie jar ---- */
 await connectDatabase();
 const suffix = Date.now();
-const email = `func-${suffix}@test.dev`;
+const username = `func-${suffix}`;
 const password = "correct-horse-battery-staple";
-await getPool().query("DELETE FROM users WHERE email LIKE $1", ["func-%@test.dev"]);
+await getPool().query("DELETE FROM users WHERE username LIKE $1", ["func-%"]);
 
 const app = createApp();
 const httpServer = app.listen(0);
@@ -108,7 +112,8 @@ const bodyText = () => document.body.textContent || "";
 const clickEl = (el) => { if (el) el.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true })); };
 
 /* ---- AUTH GATE ---- */
-assert("Auth screen shows when logged out", bodyText().includes("Welcome back") || bodyText().includes("Create your account"));
+await waitFor(() => bodyText().includes("Life Planner") && bodyText().includes("Sign In"));
+assert("Auth screen shows when logged out", bodyText().includes("Life Planner") && bodyText().includes("Sign In"));
 
 /* ---- REGISTER VIA UI ---- */
 const setNativeValue = (el, value) => {
@@ -117,18 +122,18 @@ const setNativeValue = (el, value) => {
   el.dispatchEvent(new window.Event("input", { bubbles: true }));
 };
 
-const toggle = [...document.querySelectorAll(".standard-panel button")].find(b => (b.textContent || "").includes("Create one"));
-clickEl(toggle);
+const tab = [...document.querySelectorAll(".auth-tab")].find(b => (b.textContent || "").includes("Create Account"));
+clickEl(tab);
 await sleep(30);
 
-const form = document.querySelector('form[aria-label="Authentication form"]');
+const form = document.querySelector('form[aria-label="Create account form"]');
 assert("Auth form rendered", form !== null);
 const inputs = form.querySelectorAll("input");
-assert("Auth form has name/email/password inputs", inputs.length === 3, `got ${inputs.length}`);
+assert("Auth form has name/username/password inputs", inputs.length === 3, `got ${inputs.length}`);
 
-const [nameInput, emailInput, passwordInput] = inputs;
+const [nameInput, usernameInput, passwordInput] = inputs;
 setNativeValue(nameInput, "Functional Tester");
-setNativeValue(emailInput, email);
+setNativeValue(usernameInput, username);
 setNativeValue(passwordInput, password);
 form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
 
@@ -199,7 +204,7 @@ assert("Initial habits empty", h.habits.length === 0);
 assert("Initial reminders empty", h.customReminders.length === 0);
 
 /* create + complete + delete + undo (server-persisted) */
-h.addOrUpdateTask({ name: "Buy groceries", date: "2026-08-14", priority: "Yellow", reminder: "none", type: "Personal" });
+h.addOrUpdateTask({ name: "Buy groceries", date: today, priority: "Yellow", reminder: "none", type: "Personal" });
 await waitFor(() => h.tasks.length === 1);
 assert("Task created", h.tasks[0].name === "Buy groceries");
 assert("Task id is a string (backend)", typeof h.tasks[0].id === "string", typeof h.tasks[0].id);
@@ -207,6 +212,7 @@ assert("Task id is a string (backend)", typeof h.tasks[0].id === "string", typeo
 const serverTasks = await (await jarFetch(`${base}/tasks`)).json();
 assert("Task persisted to backend", serverTasks.length === 1 && serverTasks[0].name === "Buy groceries");
 
+await waitFor(() => !String(h.tasks[0].id).startsWith("temp-"));
 const taskId = h.tasks[0].id;
 h.toggleTaskCompletion(taskId);
 await waitFor(() => h.tasks.find(t => t.id === taskId).completed === true);
@@ -223,19 +229,39 @@ await waitFor(() => h.tasks.length === 1);
 assert("Undo restores task", h.tasks[0].name === "Buy groceries");
 assert("Undo restored task on backend", (await (await jarFetch(`${base}/tasks`)).json()).length === 1);
 
+/* recurring task rolls to the next occurrence when completed */
+h.addOrUpdateTask({ name: "Daily standup", date: today, recurring: "daily", priority: "Yellow", reminder: "none", type: "Task" });
+await waitFor(() => h.tasks.some(t => t.name === "Daily standup" && !String(t.id).startsWith("temp-")));
+const rolloverTask = h.tasks.find(t => t.name === "Daily standup");
+const nextDay = new Date();
+nextDay.setDate(nextDay.getDate() + 1);
+const dayAfterKey = fmtDate(nextDay);
+h.toggleTaskCompletion(rolloverTask.id);
+await waitFor(() => {
+  const t = h.tasks.find(x => x.name === "Daily standup");
+  return t && t.completed === false && t.date === dayAfterKey;
+});
+const rolled = h.tasks.find(x => x.name === "Daily standup");
+assert("Recurring task rolls to next day on completion", rolled && rolled.completed === false && rolled.date === dayAfterKey, JSON.stringify(rolled));
+assert("Recurring rollover persisted to backend", (await (await jarFetch(`${base}/tasks`)).json()).find(t => t.name === "Daily standup")?.date === dayAfterKey);
+h.deleteTask(rolloverTask.id);
+await waitFor(() => h.tasks.length === 1);
+
 /* habits */
 h.addHabit("Read 10 pages");
 await waitFor(() => h.habits.length === 1);
 assert("Habit created", h.habits.length === 1);
+await waitFor(() => !String(h.habits[0].id).startsWith("temp-"));
 h.toggleHabitDay(0, 0);
 await waitFor(() => (h.habits[0].history || []).length >= 1);
 assert("Habit toggle records history", h.habits[0].history.length >= 1);
 assert("Habit persisted to backend", (await (await jarFetch(`${base}/habits`)).json()).length === 1);
 
 /* custom reminders */
-h.addCustomReminder({ title: "Water plants", date: "2026-08-15", time: "08:00", type: "Custom" });
+h.addCustomReminder({ title: "Water plants", date: today, time: "08:00", type: "Custom" });
 await waitFor(() => h.customReminders.length === 1);
 assert("Custom reminder created", h.customReminders.length === 1);
+await waitFor(() => !String(h.customReminders[0].id).startsWith("temp-"));
 h.deleteCustomReminder(h.customReminders[0].id);
 await waitFor(() => h.customReminders.length === 0);
 assert("Custom reminder deleted", h.customReminders.length === 0);
@@ -257,7 +283,7 @@ assert("Import rejects invalid JSON", h.importData("{not json").ok === false);
 assert("Import rejects wrong shape", h.importData(JSON.stringify({ tasks: "not-an-array" })).ok === false);
 
 const backup = {
-  tasks: [h.tasks[0], { id: "new-task-1", name: "New merged task", date: "2026-08-16", priority: "Green", reminder: "none", type: "Work" }],
+  tasks: [h.tasks[0], { id: "new-task-1", name: "New merged task", date: today, priority: "Green", reminder: "none", type: "Work" }],
   history: [], goals: [], notes: [], habits: [], meals: [], calendarEvents: [], groceryList: [], customReminders: []
 };
 const merged = h.mergeData(backup);
@@ -282,7 +308,7 @@ assert("Replace all clears tasks", h.tasks.length === 0 && h.habits.length === 0
 assert("Replace all cleared on backend", await waitServerCount("/tasks", 0));
 
 /* re-seed for persistence checks below */
-h.addOrUpdateTask({ name: "Ship feature", date: "2026-08-14", priority: "Red", reminder: "10min", type: "Task" });
+h.addOrUpdateTask({ name: "Ship feature", date: today, priority: "Red", reminder: "10min", type: "Task" });
 h.addHabit("Meditate");
 await waitFor(() => h.tasks.length === 1 && h.habits.length === 1);
 await waitServerCount("/tasks", 1);
@@ -325,7 +351,7 @@ h.logout();
 await waitFor(() => h.authStatus === "unauthenticated");
 assert("Logout clears collections client-side", h.tasks.length === 0 && h.user === null);
 
-h.login(email, password);
+h.login(username, password);
 await waitFor(() => h.authStatus === "ready" && h.tasks.length === 1 && h.habits.length === 1 && h.history.length >= 1);
 assert("Login reloads data from backend", h.tasks[0].name === "Ship feature" && h.habits.length === 1);
 assert("Login reloads activity history", h.history.length >= 1);
@@ -590,7 +616,7 @@ for (const mode of ["Day", "Week", "Year", "Agenda"]) {
 checkStructure("app: full render");
 
 /* ---- cleanup ---- */
-await getPool().query("DELETE FROM users WHERE email LIKE $1", ["func-%@test.dev"]);
+await getPool().query("DELETE FROM users WHERE username LIKE $1", ["func-%"]);
 const leftovers = await getPool().query(
   "SELECT (SELECT count(*)::int FROM tasks) + (SELECT count(*)::int FROM notes) + (SELECT count(*)::int FROM calendar_events) + (SELECT count(*)::int FROM goals) + (SELECT count(*)::int FROM habits) + (SELECT count(*)::int FROM meals) + (SELECT count(*)::int FROM grocery_items) + (SELECT count(*)::int FROM custom_reminders) + (SELECT count(*)::int FROM activity_log) AS n"
 );

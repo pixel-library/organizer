@@ -6,7 +6,7 @@ import { safeUser } from "../utils/sessions.js";
 
 const router = Router();
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_RE = /^[a-z0-9][a-z0-9_-]{2,29}$/i;
 
 const validateName = (name) => {
   const value = typeof name === "string" ? name.trim() : "";
@@ -16,10 +16,10 @@ const validateName = (name) => {
   return value;
 };
 
-const validateEmail = (email) => {
-  const value = typeof email === "string" ? email.trim().toLowerCase() : "";
-  if (!EMAIL_RE.test(value)) {
-    throw new AppError("Email must be a valid email address", 400);
+const validateUsername = (username) => {
+  const value = typeof username === "string" ? username.trim() : "";
+  if (!USERNAME_RE.test(value)) {
+    throw new AppError("Username must be 3-30 characters using letters, numbers, underscores or hyphens, starting with a letter or number", 400);
   }
   return value;
 };
@@ -33,17 +33,17 @@ router.put("/", requireAuth, async (req, res, next) => {
     const body = req.body ?? {};
     const updates = {};
     if (body.name !== undefined) updates.name = validateName(body.name);
-    if (body.email !== undefined) updates.email = validateEmail(body.email);
+    if (body.username !== undefined) updates.username = validateUsername(body.username);
     if (Object.keys(updates).length === 0) {
       throw new AppError("No valid profile fields provided", 400);
     }
 
     const { rows } = await getPool().query(
       `UPDATE users
-       SET name = COALESCE($2, name), email = COALESCE($3, email), updated_at = now()
+       SET name = COALESCE($2, name), username = COALESCE($3, username), updated_at = now()
        WHERE id = $1
-       RETURNING id, name, email, created_at, updated_at`,
-      [req.user.id, updates.name ?? null, updates.email ?? null]
+       RETURNING id, name, username, role, created_at, updated_at`,
+      [req.user.id, updates.name ?? null, updates.username ?? null]
     );
 
     if (rows.length === 0) {
@@ -52,7 +52,7 @@ router.put("/", requireAuth, async (req, res, next) => {
     res.json(safeUser(rows[0]));
   } catch (err) {
     if (err.code === "23505") {
-      return next(new AppError("An account with this email already exists", 409));
+      return next(new AppError("An account with this username already exists", 409));
     }
     next(err);
   }

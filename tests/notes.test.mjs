@@ -23,11 +23,11 @@ let base;
 async function main() {
   await connectDatabase();
   const suffix = Date.now();
-  const emailA = `notes-a-${suffix}@test.dev`;
-  const emailB = `notes-b-${suffix}@test.dev`;
+  const usernameA = `notes-a-${suffix}`;
+  const usernameB = `notes-b-${suffix}`;
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["notes-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["notes-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -45,13 +45,13 @@ async function main() {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
     });
 
-  const register = async (name, email) => {
-    const res = await call("POST", "/auth/register", { name, email, password });
+  const register = async (name, username) => {
+    const res = await call("POST", "/auth/register", { name, username, password });
     return { res, cookie: cookieFrom(res), body: await res.json() };
   };
 
-  const userA = await register("Note Alice", emailA);
-  const userB = await register("Note Bob", emailB);
+  const userA = await register("Note Alice", usernameA);
+  const userB = await register("Note Bob", usernameB);
   assert("register User A → 201", userA.res.status === 201);
   assert("register User B → 201", userB.res.status === 201);
 
@@ -130,7 +130,7 @@ async function main() {
 
   // Logout/login persistence
   await call("POST", "/auth/logout", {}, userA.cookie);
-  const relogin = await call("POST", "/auth/login", { email: emailA, password }, undefined);
+  const relogin = await call("POST", "/auth/login", { username: usernameA, password }, undefined);
   assert("relogin → 200", relogin.status === 200);
   const cookie2 = cookieFrom(relogin);
   const afterLogin = await call("GET", "/notes", undefined, cookie2);
@@ -164,7 +164,7 @@ async function main() {
   assert("note gone after delete → 404", gone.status === 404, String(gone.status));
 
   // Cleanup
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["notes-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["notes-%"]);
   const leftoverNotes = await getPool().query("SELECT count(*)::int AS n FROM notes");
   assert("no leftover test notes", leftoverNotes.rows[0].n === 0, `${leftoverNotes.rows[0].n} rows`);
 

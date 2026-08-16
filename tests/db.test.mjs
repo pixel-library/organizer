@@ -18,6 +18,10 @@ const tables = [
   "grocery_items", "custom_reminders", "activity_log", "settings", "sessions"
 ];
 
+// Data tables must start empty; users/sessions/settings hold real account
+// records created by actually using the app and are not "seeded" data.
+const dataTables = tables.filter((t) => !["users", "sessions", "settings"].includes(t));
+
 async function main() {
   await pool.query("SELECT 1");
   console.log("PASS: database connection");
@@ -46,7 +50,7 @@ async function main() {
     assert(`foreign key to users on ${t}`, fkTables.has(t));
   }
 
-  for (const t of tables) {
+  for (const t of dataTables) {
     const { rows } = await pool.query(`SELECT count(*)::int AS n FROM "${t}"`);
     assert(`no seeded data in ${t}`, rows[0].n === 0, `found ${rows[0].n} rows`);
   }
@@ -67,17 +71,46 @@ async function main() {
     lowerIdx[0]?.indexdef
   );
 
+  const { rows: usernameIdx } = await pool.query(
+    "SELECT indexdef FROM pg_indexes WHERE indexname = 'users_username_lower_unique'"
+  );
+  assert(
+    "case-insensitive username unique index",
+    usernameIdx.length === 1 && /lower\(username\)/.test(usernameIdx[0].indexdef),
+    usernameIdx[0]?.indexdef
+  );
+
   const u1 = await pool.query(
-    "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
-    ["Test User", "Alice@Example.com", "hash"]
+    "INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id",
+    ["Test User", "alice", "Alice@Example.com", "hash"]
   );
   const userId = u1.rows[0].id;
   console.log("PASS: insert user");
 
   try {
     await pool.query(
-      "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3)",
-      ["Other", "Alice@Example.com", "hash"]
+      "INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4)",
+      ["Other", "alice", "Other@Example.com", "hash"]
+    );
+    assert("duplicate username rejected (exact case)", false);
+  } catch (err) {
+    assert("duplicate username rejected (exact case)", err.code === "23505");
+  }
+
+  try {
+    await pool.query(
+      "INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4)",
+      ["Other", "ALICE", "Other2@Example.com", "hash"]
+    );
+    assert("duplicate username rejected (case-insensitive)", false);
+  } catch (err) {
+    assert("duplicate username rejected (case-insensitive)", err.code === "23505");
+  }
+
+  try {
+    await pool.query(
+      "INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4)",
+      ["Other", "other1", "Alice@Example.com", "hash"]
     );
     assert("duplicate email rejected (exact case)", false);
   } catch (err) {
@@ -86,8 +119,8 @@ async function main() {
 
   try {
     await pool.query(
-      "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3)",
-      ["Other", "alice@example.com", "hash"]
+      "INSERT INTO users (name, username, email, password_hash) VALUES ($1, $2, $3, $4)",
+      ["Other", "other2", "alice@example.com", "hash"]
     );
     assert("duplicate email rejected (case-insensitive)", false);
   } catch (err) {

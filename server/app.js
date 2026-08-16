@@ -4,11 +4,15 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { config } from "./config.js";
 import { requestLogger } from "./middleware/requestLogger.js";
-import { apiLimiter, authLimiter } from "./middleware/rateLimit.js";
+import { requestContext } from "./middleware/requestContext.js";
+import { originCheck } from "./middleware/originCheck.js";
+import { apiLimiter, adminLimiter } from "./middleware/rateLimit.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import healthRouter from "./routes/health.js";
 import authRouter from "./routes/auth.js";
 import profileRouter from "./routes/profile.js";
+import settingsRouter from "./routes/settings.js";
+import adminRouter from "./routes/admin.js";
 import tasksRouter from "./routes/tasks.js";
 import notesRouter from "./routes/notes.js";
 import calendarEventsRouter from "./routes/calendarEvents.js";
@@ -25,10 +29,15 @@ export function createApp() {
   const app = express();
 
   app.disable("x-powered-by");
+  // Behind Netlify (and other reverse proxies), resolve the real client IP
+  // from X-Forwarded-For so per-IP rate limits work in production.
+  app.set("trust proxy", config.isProd ? 1 : false);
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigins, credentials: true }));
+  app.use(requestContext);
+  app.use(originCheck);
   app.use(apiLimiter);
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "5mb" }));
   app.use(cookieParser());
   app.use(requestLogger);
 
@@ -37,8 +46,10 @@ export function createApp() {
   });
 
   app.use(`${config.apiPrefix}/health`, healthRouter);
-  app.use(`${config.apiPrefix}/auth`, authLimiter, authRouter);
+  app.use(`${config.apiPrefix}/auth`, authRouter);
   app.use(`${config.apiPrefix}/profile`, profileRouter);
+  app.use(`${config.apiPrefix}/settings`, settingsRouter);
+  app.use(`${config.apiPrefix}/admin`, adminLimiter, adminRouter);
   app.use(`${config.apiPrefix}/tasks`, tasksRouter);
   app.use(`${config.apiPrefix}/notes`, notesRouter);
   app.use(`${config.apiPrefix}/calendarEvents`, calendarEventsRouter);

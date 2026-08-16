@@ -33,8 +33,8 @@ async function main() {
   const suffix = Date.now();
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["col-%@test.dev"]);
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["mig-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["col-%"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["mig-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -52,13 +52,13 @@ async function main() {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
     });
 
-  const register = async (name, email) => {
-    const res = await call("POST", "/auth/register", { name, email, password });
+  const register = async (name, username) => {
+    const res = await call("POST", "/auth/register", { name, username, password });
     return { res, cookie: cookieFrom(res), body: await res.json() };
   };
 
-  const userA = await register("Col Alice", `col-a-${suffix}@test.dev`);
-  const userB = await register("Col Bob", `col-b-${suffix}@test.dev`);
+  const userA = await register("Col Alice", `col-a-${suffix}`);
+  const userB = await register("Col Bob", `col-b-${suffix}`);
   assert("register A → 201", userA.res.status === 201);
   assert("register B → 201", userB.res.status === 201);
 
@@ -190,7 +190,7 @@ async function main() {
   assert("B list only contains B items", (await bList.json()).length === 0);
 
   // --- MIGRATION ENDPOINT ---
-  const userC = await register("Mig Carol", `mig-c-${suffix}@test.dev`);
+  const userC = await register("Mig Carol", `mig-c-${suffix}`);
   assert("register C → 201", userC.res.status === 201);
 
   const today = todayKey();
@@ -262,7 +262,7 @@ async function main() {
   const afterLogout = await call("GET", "/goals", undefined, userC.cookie);
   assert("logged-out session rejected → 401", afterLogout.status === 401);
 
-  const loginRes = await call("POST", "/auth/login", { email: `mig-c-${suffix}@test.dev`, password }, undefined);
+  const loginRes = await call("POST", "/auth/login", { username: `mig-c-${suffix}`, password }, undefined);
   assert("login again → 200", loginRes.status === 200, String(loginRes.status));
   const cookie2 = cookieFrom(loginRes);
   const reloginGoals = await (await call("GET", "/goals", undefined, cookie2)).json();
@@ -279,8 +279,8 @@ async function main() {
   // cleanup A's extra grocery item too
   await call("DELETE", `/groceryItems/${giAId}`, undefined, userA.cookie);
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["col-%@test.dev"]);
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["mig-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["col-%"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["mig-%"]);
   const leftovers = await getPool().query(
     "SELECT (SELECT count(*)::int FROM tasks) + (SELECT count(*)::int FROM notes) + (SELECT count(*)::int FROM calendar_events) + (SELECT count(*)::int FROM goals) + (SELECT count(*)::int FROM habits) + (SELECT count(*)::int FROM meals) + (SELECT count(*)::int FROM grocery_items) + (SELECT count(*)::int FROM custom_reminders) + (SELECT count(*)::int FROM activity_log) AS n"
   );

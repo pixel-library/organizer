@@ -35,8 +35,8 @@ async function main() {
   const suffix = Date.now();
   const password = "correct-horse-battery-staple";
 
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["sec-a-%@test.dev"]);
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["sec-b-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["sec-a-%"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["sec-b-%"]);
 
   const app = createApp();
   const server = app.listen(0);
@@ -54,14 +54,14 @@ async function main() {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
     });
 
-  const register = async (name, email) => {
-    const res = await call("POST", "/auth/register", { name, email, password });
+  const register = async (name, username) => {
+    const res = await call("POST", "/auth/register", { name, username, password });
     return { res, cookie: cookieFrom(res), body: await res.json() };
   };
 
   /* ---- create development-only users A and B ---- */
-  const userA = await register("Security Alice", `sec-a-${suffix}@test.dev`);
-  const userB = await register("Security Bob", `sec-b-${suffix}@test.dev`);
+  const userA = await register("Security Alice", `sec-a-${suffix}`);
+  const userB = await register("Security Bob", `sec-b-${suffix}`);
   assert("register A → 201", userA.res.status === 201, String(userA.res.status));
   assert("register B → 201", userB.res.status === 201, String(userB.res.status));
 
@@ -69,7 +69,7 @@ async function main() {
   assert("register response has no secret fields", !containsSecret(userA.body), JSON.stringify(userA.body));
   assert("register response has no secret fields (B)", !containsSecret(userB.body), JSON.stringify(userB.body));
 
-  const loginA = await call("POST", "/auth/login", { email: userA.body.email, password });
+  const loginA = await call("POST", "/auth/login", { username: userA.body.username, password });
   assert("login A → 200", loginA.status === 200, String(loginA.status));
   const loginABody = await loginA.json();
   assert("login response has no secret fields", !containsSecret(loginABody), JSON.stringify(loginABody));
@@ -78,7 +78,7 @@ async function main() {
   const meA = await call("GET", "/auth/me", undefined, userA.cookie);
   const meABody = await meA.json();
   assert("GET /auth/me → 200 with only safe fields", meA.status === 200 &&
-    Object.keys(meABody).sort().join(",") === "createdAt,email,id,name,updatedAt", JSON.stringify(meABody));
+    Object.keys(meABody).sort().join(",") === "createdAt,id,name,role,updatedAt,username", JSON.stringify(meABody));
 
   const health = await call("GET", "/health");
   const healthBody = await health.json();
@@ -182,6 +182,20 @@ async function main() {
   const aLog = await (await call("GET", "/activityLog", undefined, userA.cookie)).json();
   assert("A activity log excludes B's entry", !aLog.some((e) => e.name === "Event B log"), JSON.stringify(aLog.map(e => e.name)));
 
+  /* ---- per-username brute-force lockout ---- */
+  const lockUser = `sec-lock-${suffix}`;
+  await register("Lock Target", lockUser);
+  let lockStatus = 0;
+  let gotLock429 = false;
+  for (let i = 0; i < 12; i += 1) {
+    const res = await call("POST", "/auth/login", { username: lockUser, password: "wrong-password-1" });
+    lockStatus = res.status;
+    if (res.status === 429) gotLock429 = true;
+  }
+  assert("per-username lockout → 429 after repeated failures", gotLock429, `last=${lockStatus}`);
+  const locked = await call("POST", "/auth/login", { username: lockUser, password });
+  assert("locked username rejects correct password with 429", locked.status === 429, String(locked.status));
+
   /* ---- rate limiting: 429 after exhausting the auth limit ---- */
   const mini = express();
   mini.use(express.json());
@@ -197,7 +211,7 @@ async function main() {
     const res = await fetch(`${miniBase}/login`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: `nobody-${i}@test.dev`, password: "wrong-password-1" })
+      body: JSON.stringify({ username: `nobody-${i}`, password: "wrong-password-1" })
     });
     lastStatus = res.status;
     if (res.status === 429) got429 = true;
@@ -206,16 +220,17 @@ async function main() {
   const ratelimitHeaders = (await fetch(`${miniBase}/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: "nobody@test.dev", password: "wrong-password-1" })
+    body: JSON.stringify({ username: "nobody", password: "wrong-password-1" })
   })).headers;
   assert("rate limiter sets standard rate-limit headers", ratelimitHeaders.get("ratelimit-remaining") !== null || ratelimitHeaders.get("rate-limit-remaining") !== null);
   miniServer.close();
 
   /* ---- cleanup: remove temporary development test data ---- */
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["sec-a-%@test.dev"]);
-  await getPool().query("DELETE FROM users WHERE email LIKE $1", ["sec-b-%@test.dev"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["sec-a-%"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["sec-b-%"]);
+  await getPool().query("DELETE FROM users WHERE username LIKE $1", ["sec-lock-%"]);
   const leftover = (await getPool().query(
-    "SELECT (SELECT count(*)::int FROM users WHERE email LIKE 'sec-%@test.dev') AS users"
+    "SELECT (SELECT count(*)::int FROM users WHERE username LIKE 'sec-%') AS users"
   )).rows[0];
   assert("no leftover security test users", leftover.users === 0, String(leftover.users));
 
